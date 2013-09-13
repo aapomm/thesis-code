@@ -1,4 +1,3 @@
-#ifndef ns_ping_h
 #define ns_ping_h
 
 #include "agent.h"

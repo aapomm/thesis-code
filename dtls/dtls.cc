@@ -9,18 +9,16 @@ public:
 } class_dtls;
 
 
-PingAgent::PingAgent() : Agent(PT_PING)
+DtlsAgent::DtlsAgent() : Agent(PT_PING)
 {
 }
 
-int PingAgent::command(int argc, const char*const* argv)
+int DtlsAgent::command(int argc, const char*const* argv)
 {
 	return 0;
 }
 
 
-void PingAgent::recv(Packet* pkt, Handler*)
+void DtlsAgent::recv(Packet* pkt, Handler*)
 {
 }
-
-
