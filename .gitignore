@@ -1,7 +1,6 @@
 *.gz
 *.swp
 *.o
-*.d*
 *.txt
 *.tr
 *.tar.gz
@@ -20,3 +19,10 @@ indep-utils/webtrace-conv/ucb/ucb-tr-stat
 ns
 nstk
 tcl/lib/ns-autoconf.tcl
+*.cdf
+conf/configure.in.debugopts
+conf/configure.in.des
+conf/configure.in.dmalloc
+conf/configure.in.dynamic
+indep-utils/dosdbell/test.dat
+tcl/ex/red-pd/allTCP/allTCP.disabled.pl
