@@ -1,0 +1,8 @@
+*.gz
+*.swp
+*.o
+*.d*
+*.txt
+*.tr
+*.tar.gz
+Makefile
