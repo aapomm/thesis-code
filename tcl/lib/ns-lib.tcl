@@ -1703,7 +1703,6 @@ Simulator instproc multihome-connect {src dst} {
 		$dst add-multihome-destination \
 				[$src set agent_addr_] [$src set agent_port_]
 	}
-	
         set destNum 0
 	foreach binding [$dst set multihome_bindings_] {
 		incr destNum
