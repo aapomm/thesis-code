@@ -1572,7 +1572,7 @@ Simulator instproc attach-agent { node agent } {
 	# This is NEEDED so that single homed agents can play with multihomed
 	# ones!
 	# multihoming only for SCTP agents -Padma H.
-	if {([lindex [split [$agent info class] "/"] 1] == "SCTP") || ([lindex [split [$agent info class] "/"] 1] == "DTLS")} {
+	if {[lindex [split [$agent info class] "/"] 1] == "SCTP"} {
 		$agent instvar multihome_bindings_
 		set binding_ {}
 		set addr [$agent set agent_addr_]
