@@ -19,11 +19,15 @@ set d0 [$ns node]
 set d1 [$ns node]
 set d2 [$ns node]
 
+set r0 [$ns node]
+
 $ns duplex-link $s0 $s1 1Mb 10ms DropTail
 $ns duplex-link $s1 $s2 1Mb 10ms DropTail
-$ns duplex-link $s2 $d2 1Mb 10ms DropTail
 $ns duplex-link $d2 $d1 1Mb 10ms DropTail
 $ns duplex-link $d1 $d0 1Mb 10ms DropTail
+
+$ns duplex-link $s2 $r0 0.25Mb 100ms DropTail
+$ns duplex-link $d2 $r0 0.25Mb 100ms DropTail
 
 set Ssctp [new Agent/SCTP]
 $ns attach-agent $s0 $Ssctp
