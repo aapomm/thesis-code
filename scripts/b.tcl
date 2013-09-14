@@ -16,21 +16,12 @@ set n1 [$ns node]
 
 $ns duplex-link $n0 $n1 1Mb 10ms DropTail
 
-set e [new Agent/Encapsulator]
-set d [new Agent/Decapsulator]
 set sctp0 [new Agent/SCTP]
-set udp0 [new Agent/UDP]
-set udp1 [new Agent/UDP]
 set sctp1 [new Agent/SCTP]
 
-$ns attach-agent $n0 $udp0
-$ns attach-agent $n1 $udp1
-$sctp0 target $e
-$e set status_ 1
-$e target $udp0
-$udp0 target $udp1
-$udp1 target $d
-$d target $sctp1
+$ns attach-agent $n0 $sctp0
+$ns attach-agent $n1 $sctp1
+$ns connect $sctp0 $sctp1
 
 set cbr [new Application/Traffic/CBR]
 $cbr set packetSize_ 500
