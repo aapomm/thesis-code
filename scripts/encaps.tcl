@@ -17,35 +17,24 @@ set n1 [$ns node]
 $ns duplex-link $n0 $n1 1Mb 10ms DropTail
 
 set e [new Agent/Encapsulator]
-$ns attach-agent $n0 $e
-
 set d [new Agent/Decapsulator]
-$ns attach-agent $n1 $d
-
-set udp [new Agent/UDP]
-$udp target $e
-
+set udp0 [new Agent/UDP]
 set udp1 [new Agent/UDP]
-$e decap-target $udp1
+set udp2 [new Agent/UDP]
 
-$udp1 target $d
+$ns attach-agent $n0 $udp1
+$ns attach-agent $n1 $udp2
+$udp0 target $e
+$e decap-target $d
+$udp2 target $d
 
 set cbr [new Application/Traffic/CBR]
 $cbr set packetSize_ 500
 $cbr set interval_ 0.05
-$cbr attach-agent $udp
+$cbr attach-agent $udp0
 
-set null [new Agent/Null]
-$d target $null
-
-$ns connect $e $d
-
-puts "Connected"
-
-puts "Stopped"
+$ns connect $udp1 $udp2
 
 $ns at 0.5 "$cbr start"
 $ns at 4.5 "$cbr stop"
 $ns run
-
-puts "TAPOS NA."
