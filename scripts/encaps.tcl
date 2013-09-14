@@ -26,7 +26,9 @@ set udp [new Agent/UDP]
 $udp target $e
 
 set udp1 [new Agent/UDP]
-$e target 
+$e decap-target $udp1
+
+$udp1 target $d
 
 set cbr [new Application/Traffic/CBR]
 $cbr set packetSize_ 500
