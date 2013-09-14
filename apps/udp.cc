@@ -123,12 +123,15 @@ void UdpAgent::sendmsg(int nbytes, AppData* data, const char* flags)
 	}
 	idle();
 }
-void UdpAgent::recv(Packet* pkt, Handler*)
+void UdpAgent::recv(Packet* pkt, Handler* h)
 {
+	printf("Pakete ako at ako ay %d\n", hdr_cmn::access(pkt)->ptype());
 	if (app_ ) {
 		// If an application is attached, pass the data to the app
 		hdr_cmn* h = hdr_cmn::access(pkt);
 		app_->process_data(h->size(), pkt->userdata());
+	} else if (hdr_cmn::access(pkt)->ptype() == PT_ENCAPSULATED) {
+		send(pkt, h);
 	} else if (pkt->userdata() && pkt->userdata()->type() == PACKET_DATA) {
 		// otherwise if it's just PacketData, pass it to Tcl
 		//
