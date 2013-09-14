@@ -21,19 +21,22 @@ set d [new Agent/Decapsulator]
 set udp0 [new Agent/UDP]
 set udp1 [new Agent/UDP]
 set udp2 [new Agent/UDP]
+set null [new Agent/Null]
 
 $ns attach-agent $n0 $udp1
 $ns attach-agent $n1 $udp2
 $udp0 target $e
-$e decap-target $d
+$e set status_ 1
+$e target $udp1
 $udp2 target $d
+$udp1 target $udp2
+$d target $null
 
 set cbr [new Application/Traffic/CBR]
 $cbr set packetSize_ 500
 $cbr set interval_ 0.05
 $cbr attach-agent $udp0
 
-$ns connect $udp1 $udp2
 
 $ns at 0.5 "$cbr start"
 $ns at 4.5 "$cbr stop"
