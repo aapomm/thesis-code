@@ -1575,7 +1575,6 @@ Simulator instproc attach-agent { node agent } {
 	if {([lindex [split [$agent info class] "/"] 1] == "SCTP") || ([lindex [split [$agent info class] "/"] 1] == "DTLS")} {
 		$agent instvar multihome_bindings_
 		set binding_ {}
-		puts "ASDFASF" //HACK
 		set addr [$agent set agent_addr_]
 		set port [$agent set agent_port_]
 		lappend binding_ $addr
