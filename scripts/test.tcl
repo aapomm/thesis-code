@@ -48,6 +48,7 @@ $ns attach-agent $d1 $Ddtls
 set Dsctp [new Agent/SCTP]
 $ns attach-agent $d0 $Dsctp
 
+$ns connect $Ssctp $Sdtls
 $ns connect $Ssctp $Dsctp
 
 $ns at 0.5 "$cbr start"
