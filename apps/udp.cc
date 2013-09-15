@@ -125,6 +125,7 @@ void UdpAgent::sendmsg(int nbytes, AppData* data, const char* flags)
 }
 void UdpAgent::recv(Packet* pkt, Handler*)
 {
+	printf("UDP: Received a packet.\n");
 	if (app_ ) {
 		// If an application is attached, pass the data to the app
 		hdr_cmn* h = hdr_cmn::access(pkt);

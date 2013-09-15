@@ -96,6 +96,7 @@ void CBR_Traffic::init()
 
 void CBR_Traffic::start()
 {
+	printf("CBR: Started.\n");
         init();
         running_ = 1;
         timeout();

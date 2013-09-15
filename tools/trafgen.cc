@@ -71,6 +71,7 @@ void TrafficGenerator::timeout()
 		return;
 
 	/* send a packet */
+	printf("Trafgen: Sending a packet.\n");
 	send(size_);
 	/* figure out when to send the next one */
 	nextPkttime_ = next_interval(size_);

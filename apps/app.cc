@@ -108,6 +108,7 @@ void Application::stop()
 
 void Application::send(int nbytes)
 {
+	printf("Application: Sending %d bytes to the agent at %s.\n", nbytes, agent_->name());
 	agent_->sendmsg(nbytes);
 }
 

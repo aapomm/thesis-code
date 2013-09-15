@@ -84,6 +84,7 @@ TimerHandler::sched(double delay)
 void
 TimerHandler::resched(double delay)
 {
+	printf("Resched\n");
 	if (status_ == TIMER_PENDING)
 		_cancel();
 	_sched(delay);
