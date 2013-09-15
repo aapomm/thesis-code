@@ -27,12 +27,11 @@ $ns attach-agent $n0 $udp0
 $ns attach-agent $n1 $udp1
 $sctp0 set fid_ 1
 $sctp0 target $e
+$sctp0 set-primary-destination $n1
 $e set status_ 1
 $e target $udp0
 $udp1 target $d
 $d target $sctp1
-
-$ns connect $udp0 $udp1
 
 set cbr [new Application/Traffic/CBR]
 $cbr set packetSize_ 128

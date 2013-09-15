@@ -1019,6 +1019,7 @@ int SctpAgent::command(int argc, const char*const* argv)
 	      oTcl.resultf("no such object %s", argv[2]);
 	      return (TCL_ERROR);
 	    }
+		printf("%x\n", opNode->address());
 	  iRetVal = SetPrimary( opNode->address() );
 
 	  if(iRetVal == TCL_ERROR)
@@ -1314,7 +1315,7 @@ void SctpAgent::AddDestination(int iNsAddr, int iNsPort)
    * not set a primary
    */
   spPrimaryDest = spNewDest;
-  prtinf("spPrimaryDest: %d", spPrimaryDest);
+  printf("spPrimaryDest: %d", spPrimaryDest);
   spNewTxDest = spPrimaryDest;
 
   /* allocate packet with the dest addr. to be used later for setting src dest
@@ -1334,11 +1335,13 @@ int SctpAgent::SetPrimary(int iNsAddr)
 
   Node_S *spCurrNode = NULL;
   SctpDest_S *spCurrDest = NULL;
-
+  printf("SetPrimary...\n");
+  printf("%x\n", sDestList.spHead);
   for(spCurrNode = sDestList.spHead;
       spCurrNode != NULL;
       spCurrNode = spCurrNode->spNext)
     {
+      printf("I'm in the loop %d\n", iNsAddr);
       spCurrDest = (SctpDest_S *) spCurrNode->vpData;
       
       if(spCurrDest->iNsAddr == iNsAddr)
@@ -6192,7 +6195,9 @@ void SctpAgent::sendmsg(int iNumBytes, const char *cpFlags)
       set_pkttype(PT_SCTP); 
       iOutDataSize = GenChunk(SCTP_CHUNK_INIT, ucpOutData);
 	printf("SCTP_STATE_CLOSED: calling SendPacket()\n");
-	printf("%d", spPrimaryDest);
+	printf("%x\n", spPrimaryDest->dRto);
+	printf("aw\n");
+	printf("%x\n", opT1InitTimer);
       opT1InitTimer->resched(spPrimaryDest->dRto);
       eState = SCTP_STATE_COOKIE_WAIT;
       SendPacket(ucpOutData, iOutDataSize, spPrimaryDest);
