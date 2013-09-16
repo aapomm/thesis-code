@@ -26,6 +26,8 @@ set sctp1 [new Agent/SCTP]
 $ns attach-agent $n0 $udp0
 $ns attach-agent $n1 $udp1
 $sctp0 set fid_ 1
+$sctp0 set multihome_bindings_ 0
+$sctp1 set multihome_bindings_ 0
 $sctp0 target $e
 $e set status_ 1
 $e target $udp0
@@ -33,6 +35,7 @@ $udp1 target $d
 $d target $sctp1
 
 $ns connect $udp0 $udp1
+$ns multihome-connect $sctp0 $sctp1
 
 set cbr [new Application/Traffic/CBR]
 $cbr set packetSize_ 128
