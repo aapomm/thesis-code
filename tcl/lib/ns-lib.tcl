@@ -1583,6 +1583,24 @@ Simulator instproc attach-agent { node agent } {
 	}
 }
 
+Simulator instproc fix-bindings { agent } {
+	# Armando L. Caro Jr. <acaro@@cis,udel,edu> 10/22/2001 
+	#
+	# list of tuples (addr, port)
+	# This is NEEDED so that single homed agents can play with multihomed
+	# ones!
+	# multihoming only for SCTP agents -Padma H.
+	if {[lindex [split [$agent info class] "/"] 1] == "SCTP"} {
+		$agent instvar multihome_bindings_
+		set binding_ {}
+		set addr [$agent set agent_addr_]
+		set port [$agent set agent_port_]
+		lappend binding_ $addr
+		lappend binding_ $port
+		lappend multihome_bindings_ $binding_
+	}
+}
+
 Simulator instproc attach-tbf-agent { node agent tbf } {
 	$node attach $agent
 	$agent attach-tbf $tbf
