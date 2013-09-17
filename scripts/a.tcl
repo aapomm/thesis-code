@@ -18,15 +18,14 @@ $ns duplex-link $n0 $n1 1Mb 10ms DropTail
 
 set sctp [new Agent/SCTP]
 $ns attach-agent $n0 $sctp
-puts "Created an SCTP Agent"
+
+set dtls [new Agent/DTLS]
+$ns attach-agent $n1 $dtls
 
 set cbr [new Application/Traffic/CBR]
 $cbr set packetSize_ 500
 $cbr set interval_ 0.005
 $cbr attach-agent $sctp
-
-set dtls [new Agent/DTLS]
-$ns attach-agent $n1 $dtls
 
 $ns connect $sctp $dtls
 

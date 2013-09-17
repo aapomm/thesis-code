@@ -1663,16 +1663,12 @@ Simulator instproc connect {src dst} {
     	if {[lindex [split [$src info class] "/"] 1] == "SCTP"} {
     		$self multihome-connect $src $dst
     	}
-    	if {[lindex [split [$dst info class] "/"] 1] == "DTLS"} {
-    		$self multihome-connect $src $dst
-    	}
 
 	$self simplex-connect $src $dst
 	$self simplex-connect $dst $src
 
 
 	# Debo
-
 	if {$useasim_ == 1} {
 		set sid [$src nodeid]
 		set sport [$src set agent_port_]
