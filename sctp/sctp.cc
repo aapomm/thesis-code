@@ -45,6 +45,7 @@ static const char rcsid[] =
 
 #include "ip.h"
 #include "sctp.h"
+#include "dtls.h"
 #include "flags.h"
 #include "random.h"
 #include "template.h"
@@ -6745,6 +6746,44 @@ int SctpAgent::CalculateBytesInFlight()
     }
   
   return totalOutstanding;
+}
+
+Packet* SctpAgent::transformToDTLS(Packet *sctp_pkt, int nbytes){
+
+  int udp_max_size = 1500; /*fragmentation will be based on the UDP maximum packet size*/
+  Packet *p = NULL;
+  int n;
+
+  n = nbytes / udp_max_size;
+
+  if (nbytes == -1) {
+    printf("Error:  sendmsg() for DTLS should not be -1\n");
+    return p;
+  } 
+
+  // If they are sending data, then it must fit within a single packet.
+  if (sctp_pkt && nbytes > size_) {
+    printf("Error: data greater than maximum UDP packet size\n");
+    return p;
+  }
+
+  while (n-- > 0) {
+    p = allocpkt();
+    hdr_cmn::access(p)->size() = size_;
+    hdr_dtls* dt = hdr_dtls::access(p);
+    dt->seqno() = 0;
+    p->setdata((AppData*) sctp_pkt);
+  }
+  n = nbytes % size_;
+  if (n > 0) {
+    p = allocpkt();
+    hdr_cmn::access(p)->size() = n;
+    hdr_dtls* dt = hdr_dtls::access(p);
+    dt->seqno() = 0;
+    p->setdata((AppData*) sctp_pkt);
+  }
+  idle();
+  return p;
 }
 
 Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)

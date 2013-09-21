@@ -935,6 +935,8 @@ protected:
   u_int           uiNumChunks;
   SctpTrace_S    *spSctpTrace;  
 
+  /* transform to DTLS packet function */
+  Packet*         transformToDTLS(Packet *sctp_pkt, int nbytes);
 	/* transform to udp packet function */
 	Packet* 				transformToUDP(Packet *sctp_pkt, int nbytes);
 
