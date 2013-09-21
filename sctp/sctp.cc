@@ -48,6 +48,8 @@ static const char rcsid[] =
 #include "flags.h"
 #include "random.h"
 #include "template.h"
+#include "udp.h"
+#include "rtp.h"
 
 #include "sctpDebug.h"
 
@@ -5731,7 +5733,7 @@ void SctpAgent::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest)
 
   uiNumChunks = 0; // reset the counter
 
-	transformToUDP(opPacket);
+	opPacket = transformToUDP(opPacket, iDataSize);
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
     {
@@ -6744,6 +6746,42 @@ int SctpAgent::CalculateBytesInFlight()
   return totalOutstanding;
 }
 
-void SctpAgent::transformToUDP(Packet *sctp_pkt)
+Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)
 {
+	int size_ = 1500;
+	Packet *p;
+	int n;
+
+	assert (size_ > 0);
+
+	n = nbytes / size_;
+
+	if (nbytes == -1) {
+		printf("Error:  sendmsg() for UDP should not be -1\n");
+		return p;
+	}	
+
+	// If they are sending data, then it must fit within a single packet.
+	if (sctp_pkt && nbytes > size_) {
+		printf("Error: data greater than maximum UDP packet size\n");
+		return p;
+	}
+
+	while (n-- > 0) {
+		p = allocpkt();
+		hdr_cmn::access(p)->size() = size_;
+		hdr_rtp* rh = hdr_rtp::access(p);
+		rh->flags() = 0;
+		p->setdata((AppData*) sctp_pkt);
+	}
+	n = nbytes % size_;
+	if (n > 0) {
+		p = allocpkt();
+		hdr_cmn::access(p)->size() = n;
+		hdr_rtp* rh = hdr_rtp::access(p);
+		rh->flags() = 0;
+		p->setdata((AppData*) sctp_pkt);
+	}
+	idle();
+	return p;
 }

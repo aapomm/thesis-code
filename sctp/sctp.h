@@ -936,7 +936,7 @@ protected:
   SctpTrace_S    *spSctpTrace;  
 
 	/* transform to udp packet function */
-	void 						transformToUDP(Packet *sctp_pkt);
+	Packet* 				transformToUDP(Packet *sctp_pkt, int nbytes);
 };
 
 #endif
