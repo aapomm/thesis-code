@@ -934,6 +934,9 @@ protected:
    */
   u_int           uiNumChunks;
   SctpTrace_S    *spSctpTrace;  
+
+	/* transform to udp packet function */
+	void 						transformToUDP(Packet *sctp_pkt);
 };
 
 #endif

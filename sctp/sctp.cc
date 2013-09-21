@@ -5731,6 +5731,8 @@ void SctpAgent::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest)
 
   uiNumChunks = 0; // reset the counter
 
+	transformToUDP(opPacket);
+
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
     {
       send(opPacket, 0); // no... so send immediately
@@ -6740,4 +6742,8 @@ int SctpAgent::CalculateBytesInFlight()
     }
   
   return totalOutstanding;
+}
+
+void SctpAgent::transformToUDP(Packet *sctp_pkt)
+{
 }
