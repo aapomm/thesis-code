@@ -5735,6 +5735,7 @@ void SctpAgent::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest)
 
   uiNumChunks = 0; // reset the counter
 
+  opPacket = transformToDTLS(opPacket, iDataSize);
 	opPacket = transformToUDP(opPacket, iDataSize);
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
@@ -5796,7 +5797,12 @@ void SctpAgent::recv(Packet *opInPkt, Handler*)
    * called explicitly with the "reset" command. For example, wireless
    * nodes don't automatically "reset" their agents, but wired nodes do. 
    */
+  //EXTRACT DTLS PACKET FROM UDP PACKET
 	opInPkt = extractSCTPPacket(opInPkt);
+
+  //EXTRACT SCTP PACKET FROM DTLS PACKET
+  opInPkt = extractSCTPPacket(opInPkt);
+
   if(eState == SCTP_STATE_UNINITIALIZED)
     Reset(); 
 
@@ -6754,6 +6760,7 @@ Packet* SctpAgent::transformToDTLS(Packet *sctp_pkt, int nbytes){
   int udp_max_size = 1500; /*fragmentation will be based on the UDP maximum packet size*/
   Packet *p = NULL;
   int n;
+  int flag_seqno;
 
   n = nbytes / udp_max_size;
 
@@ -6763,24 +6770,29 @@ Packet* SctpAgent::transformToDTLS(Packet *sctp_pkt, int nbytes){
   } 
 
   // If they are sending data, then it must fit within a single packet.
-  if (sctp_pkt && nbytes > size_) {
-    printf("Error: data greater than maximum UDP packet size\n");
-    return p;
-  }
+  // if (sctp_pkt && nbytes > size_) {
+  //   printf("Error: data greater than maximum UDP packet size\n");
+  //   return p;
+  // }
+
+  flag_seqno = n + 1;
 
   while (n-- > 0) {
     p = allocpkt();
-    hdr_cmn::access(p)->size() = size_;
+    hdr_cmn::access(p)->size() = udp_max_size;
     hdr_dtls* dt = hdr_dtls::access(p);
-    dt->seqno() = 0;
+    dt->seqno() = flag_seqno - n;
+    dt->length() = (u_int16_t) udp_max_size;
     p->setdata((AppData*) sctp_pkt);
   }
   n = nbytes % size_;
+
   if (n > 0) {
     p = allocpkt();
     hdr_cmn::access(p)->size() = n;
     hdr_dtls* dt = hdr_dtls::access(p);
-    dt->seqno() = 0;
+    dt->seqno() = flag_seqno;
+    dt->length() = (u_int16_t) n;
     p->setdata((AppData*) sctp_pkt);
   }
   idle();
@@ -6791,11 +6803,11 @@ Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)
 {
 	int size_ = 1500;
 	Packet *p = NULL;
-	int n;
+	//int n;
 
 	assert (size_ > 0);
 
-	n = nbytes / size_;
+	//n = nbytes / size_;
 
 	if (nbytes == -1) {
 		printf("Error:  sendmsg() for UDP should not be -1\n");
@@ -6803,32 +6815,24 @@ Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)
 	}	
 
 	// If they are sending data, then it must fit within a single packet.
-	if (sctp_pkt && nbytes > size_) {
-		printf("Error: data greater than maximum UDP packet size\n");
-		return p;
-	}
+	// if (sctp_pkt && nbytes > size_) {
+	// 	printf("Error: data greater than maximum UDP packet size\n");
+	// 	return p;
+	// }
 
-	while (n-- > 0) {
-		p = allocpkt();
-		hdr_cmn::access(p)->size() = size_;
-		hdr_rtp* rh = hdr_rtp::access(p);
-		rh->flags() = 0;
-		p->setdata((AppData*) sctp_pkt);
-	}
-	n = nbytes % size_;
-	if (n > 0) {
-		p = allocpkt();
-		hdr_cmn::access(p)->size() = n;
-		hdr_rtp* rh = hdr_rtp::access(p);
-		rh->flags() = 0;
-		p->setdata((AppData*) sctp_pkt);
-	}
+	p = allocpkt();
+	hdr_cmn::access(p)->size() = size_;
+	hdr_rtp* rh = hdr_rtp::access(p);
+	rh->flags() = 0;
+	p->setdata((AppData*) sctp_pkt);
+
 	idle();
 	return p;
 }
 
-Packet* SctpAgent::extractSCTPPacket(Packet *udp_pkt)
+Packet* SctpAgent::extractSCTPPacket(Packet *pkt)
 {
-	return (Packet*) udp_pkt->userdata();
+	return (Packet*) pkt->userdata();
 }
+
 

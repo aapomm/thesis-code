@@ -1,4 +1,5 @@
 *.gz
+*.nam
 *.swp
 *.o
 *.txt
