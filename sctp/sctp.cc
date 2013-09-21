@@ -5735,7 +5735,7 @@ void SctpAgent::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest)
 
   uiNumChunks = 0; // reset the counter
 
-  opPacket = transformToDTLS(opPacket, iDataSize);
+  //opPacket = transformToDTLS(opPacket, iDataSize);
 	opPacket = transformToUDP(opPacket, iDataSize);
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
@@ -5798,7 +5798,7 @@ void SctpAgent::recv(Packet *opInPkt, Handler*)
    * nodes don't automatically "reset" their agents, but wired nodes do. 
    */
   //EXTRACT DTLS PACKET FROM UDP PACKET
-	opInPkt = extractSCTPPacket(opInPkt);
+	//opInPkt = extractSCTPPacket(opInPkt);
 
   //EXTRACT SCTP PACKET FROM DTLS PACKET
   opInPkt = extractSCTPPacket(opInPkt);
