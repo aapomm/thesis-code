@@ -6749,7 +6749,7 @@ int SctpAgent::CalculateBytesInFlight()
 Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)
 {
 	int size_ = 1500;
-	Packet *p;
+	Packet *p = NULL;
 	int n;
 
 	assert (size_ > 0);
