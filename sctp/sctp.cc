@@ -5794,6 +5794,7 @@ void SctpAgent::recv(Packet *opInPkt, Handler*)
    * called explicitly with the "reset" command. For example, wireless
    * nodes don't automatically "reset" their agents, but wired nodes do. 
    */
+	opInPkt = extractSCTPPacket(opInPkt);
   if(eState == SCTP_STATE_UNINITIALIZED)
     Reset(); 
 
@@ -6785,3 +6786,9 @@ Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)
 	idle();
 	return p;
 }
+
+Packet* SctpAgent::extractSCTPPacket(Packet *udp_pkt)
+{
+	return (Packet*) udp_pkt->userdata();
+}
+

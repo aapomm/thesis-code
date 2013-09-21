@@ -937,6 +937,9 @@ protected:
 
 	/* transform to udp packet function */
 	Packet* 				transformToUDP(Packet *sctp_pkt, int nbytes);
+
+	/*extract sctp from udp packet function */
+	Packet*         extractSCTPPacket(Packet *udp_pkt);
 };
 
 #endif
