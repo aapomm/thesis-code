@@ -62,6 +62,7 @@ static const char rcsid[] =
 #define	MAX(x,y)	(((x)>(y))?(x):(y))
 
 int hdr_sctp::offset_;
+int hdr_dtls::offset_;
 
 static class SCTPHeaderClass : public PacketHeaderClass 
 {
