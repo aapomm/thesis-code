@@ -934,6 +934,19 @@ protected:
    */
   u_int           uiNumChunks;
   SctpTrace_S    *spSctpTrace;  
+
+  /* Encapsulation functions (SCTP->DTLS->UDP) 
+  */
+  Packet*         transformToDTLS(Packet *sctp_pkt, int nbytes);
+	Packet* 				transformToUDP(Packet *sctp_pkt, int nbytes);
+
+	/* Dencapsulation function
+  */
+	Packet*         extractSCTPPacket(Packet *udp_pkt);
+
+  /* Benchmarking variables
+  */
+  int bytes_;
 };
 
 #endif

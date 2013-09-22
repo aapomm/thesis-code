@@ -883,6 +883,9 @@ Agent/SCTP set frCount_ 0              ;
 Agent/SCTP set timeoutCount_ 0         ;                                      
 Agent/SCTP set rcdCount_ 0             ;# total count of route calc delays    
 
+## FOR SCTP BENCHMARKING
+Agent/SCTP set bytes_ 0 				;
+
 Agent/SCTP/MultipleFastRtx set mfrCount_ 0                                    
 Agent/SCTP/MfrTimestamp set mfrCount_ 0    
 
