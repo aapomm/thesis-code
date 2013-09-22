@@ -106,6 +106,10 @@ SctpAgent::SctpAgent() : Agent(PT_SCTP)
   opT1InitTimer = new T1InitTimer(this);
   opT1CookieTimer = new T1CookieTimer(this);
   eState = SCTP_STATE_UNINITIALIZED;
+
+  /* BENCHMARKING */
+  bytes_ = 0;
+  bind("bytes_", &bytes_);
 }
 
 SctpAgent::~SctpAgent()
@@ -5802,6 +5806,11 @@ void SctpAgent::recv(Packet *opInPkt, Handler*)
 
   //EXTRACT SCTP PACKET FROM DTLS PACKET
   opInPkt = extractSCTPPacket(opInPkt);
+
+  /* BENCHMARKING 
+      calculate total bytes received
+  */
+  bytes_ += hdr_cmn::access(opInPkt)->size();
 
   if(eState == SCTP_STATE_UNINITIALIZED)
     Reset(); 

@@ -935,13 +935,18 @@ protected:
   u_int           uiNumChunks;
   SctpTrace_S    *spSctpTrace;  
 
-  /* transform to DTLS packet function */
+  /* Encapsulation functions (SCTP->DTLS->UDP) 
+  */
   Packet*         transformToDTLS(Packet *sctp_pkt, int nbytes);
-	/* transform to udp packet function */
 	Packet* 				transformToUDP(Packet *sctp_pkt, int nbytes);
 
-	/*extract sctp from udp packet function */
+	/* Dencapsulation function
+  */
 	Packet*         extractSCTPPacket(Packet *udp_pkt);
+
+  /* Benchmarking variables
+  */
+  int bytes_;
 };
 
 #endif

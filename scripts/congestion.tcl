@@ -22,7 +22,7 @@ for {set i 0} {$i < 9} {incr i} {
 	$ns duplex-link $n($i) $n9 1Mb 10ms DropTail
 }
 
-$ns duplex-link $n9 $n10 1Mb 10ms DropTail
+$ns duplex-link $n9 $n10 0.5Mb 50ms DropTail
 
 for {set i 0} {$i < 9} {incr i} {
 	set sctp($i) [new Agent/SCTP]
