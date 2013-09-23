@@ -198,9 +198,13 @@ static const packet_t PT_DCCP_RESET = 71;
 
         // M-DART packets
 static const packet_t PT_MDART = 72;
+
+		//DTLS PACKET
+static const packet_t PT_DTLS = 73;
 	
         // insert new packet types here
-static packet_t       PT_NTYPE = 73; // This MUST be the LAST one
+static packet_t       PT_NTYPE = 74; // This MUST be the LAST one
+
 
 enum packetClass
 {
@@ -416,6 +420,8 @@ public:
 		name_[PT_DCCP_CLOSE]="DCCP_Close";
 		name_[PT_DCCP_CLOSEREQ]="DCCP_CloseReq";
 		name_[PT_DCCP_RESET]="DCCP_Reset";
+
+		name_[PT_DTLS]="DTLS";
 
 		name_[PT_NTYPE]= "undefined";
 	}
