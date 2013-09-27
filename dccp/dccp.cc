@@ -32,6 +32,8 @@
 #include "dccp.h"
 #include "flags.h"
 #include "random.h"
+#include "udp.h"
+#include "rtp.h"
 
 //string representation of types
 char* DCCPAgent::state_str_[DCCP_NUM_STATES] =
@@ -626,6 +628,7 @@ void DCCPAgent::reset(){
 void DCCPAgent::output(bool try_pure_ack){
 	int data_size;
 	Packet* pkt;
+	Packet* udp_pkt;
 	hdr_dccp *dccph;
 	hdr_dccpack *dccpah;
 	hdr_cmn *cmnh;
@@ -774,9 +777,12 @@ void DCCPAgent::output(bool try_pure_ack){
 	default:
 		;
 	}
-	
+
+	// Transform to UDP packet
+	udp_pkt = transformToUDP(pkt); 
+
 	//send packet
-	send(pkt,0);
+	send(udp_pkt,0);
 
 	if (tell_app){ //inform application
 		assert(!moreToSend);
@@ -832,6 +838,7 @@ void DCCPAgent::sendReset(dccp_reset_reason reason, u_int8_t data1,
 
 	debug("%f, DCCP(%s)::sendReset() - Sent a RESET packet (Reason %s (%d), data (%d,%d,%d), seq: %d, ack: %d, size: %d, data_offset_ %d, ndp: %d)\n",
 	      now(), name(), resetReasonAsStr(dccpresh->rst_reason_), dccpresh->rst_reason_, dccpresh->rst_data1_, dccpresh->rst_data2_, dccpresh->rst_data3_, dccph->seq_num_, dccpah->ack_num_, cmnh->size(), dccph->data_offset_,dccph->ndp_);
+	pkt = transformToUDP(pkt);
 	send(pkt,0);
 }
 
@@ -1562,6 +1569,8 @@ void DCCPAgent::recv(Packet* pkt, Handler* handler){
 	output_ = false;
 	output_flag_ = false;
 
+	pkt = extractDCCPPacket(pkt);
+
 	//check if packet is valid
 	if (!checkPacket(pkt))
 		goto free;
@@ -1976,3 +1985,24 @@ void DCCPAgent::advanceby(int delta){
 	}
 }
 
+Packet* DCCPAgent::transformToUDP(Packet *dccp_pkt)
+{
+	int size_ = 1500;
+	Packet *p = NULL;
+
+	assert (size_ > 0);
+
+	p = allocpkt();
+	hdr_cmn::access(p)->size() = size_;
+	hdr_rtp* rh = hdr_rtp::access(p);
+	rh->flags() = 0;
+	p->setdata((AppData*) dccp_pkt);
+
+	idle();
+	return p;
+}
+
+Packet* DCCPAgent::extractDCCPPacket(Packet *pkt)
+{
+	return (Packet*) pkt->userdata();
+}

@@ -35,6 +35,7 @@
 #include "dccp_types.h"
 #include "dccp_packets.h"
 #include "packet.h"
+#include "udp.h"
 #include "dccp_sb.h"
 #include "dccp_opt.h"
 #include "dccp_ackv.h"
@@ -549,6 +550,16 @@ public:
 	 * arg: delta - number of packets to send
 	 */
 	void advanceby(int delta);
+
+	/* Encapsulation functions
+	*/
+
+	Packet* transformToUDP(Packet *dccp_pkt);
+
+	/* Decapsulation function
+	*/
+
+	Packet* extractDCCPPacket(Packet *udp_pkt);
 };
 
 #endif
