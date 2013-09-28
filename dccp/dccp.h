@@ -555,6 +555,7 @@ public:
 	*/
 
 	Packet* transformToUDP(Packet *dccp_pkt);
+	Packet* transformToDTLS(Packet *dccp_pkt, int nbytes);
 
 	/* Decapsulation function
 	*/

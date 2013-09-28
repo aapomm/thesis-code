@@ -33,6 +33,7 @@
 #include "flags.h"
 #include "random.h"
 #include "udp.h"
+#include "dtls.h"
 #include "rtp.h"
 
 //string representation of types
@@ -628,7 +629,6 @@ void DCCPAgent::reset(){
 void DCCPAgent::output(bool try_pure_ack){
 	int data_size;
 	Packet* pkt;
-	Packet* udp_pkt;
 	hdr_dccp *dccph;
 	hdr_dccpack *dccpah;
 	hdr_cmn *cmnh;
@@ -779,10 +779,11 @@ void DCCPAgent::output(bool try_pure_ack){
 	}
 
 	// Transform to UDP packet
-	udp_pkt = transformToUDP(pkt); 
+	pkt = transformToDTLS(pkt, data_size);
+	pkt = transformToUDP(pkt); 
 
 	//send packet
-	send(udp_pkt,0);
+	send(pkt,0);
 
 	if (tell_app){ //inform application
 		assert(!moreToSend);
@@ -838,6 +839,7 @@ void DCCPAgent::sendReset(dccp_reset_reason reason, u_int8_t data1,
 
 	debug("%f, DCCP(%s)::sendReset() - Sent a RESET packet (Reason %s (%d), data (%d,%d,%d), seq: %d, ack: %d, size: %d, data_offset_ %d, ndp: %d)\n",
 	      now(), name(), resetReasonAsStr(dccpresh->rst_reason_), dccpresh->rst_reason_, dccpresh->rst_data1_, dccpresh->rst_data2_, dccpresh->rst_data3_, dccph->seq_num_, dccpah->ack_num_, cmnh->size(), dccph->data_offset_,dccph->ndp_);
+	pkt = transformToDTLS(pkt, cmnh->size());
 	pkt = transformToUDP(pkt);
 	send(pkt,0);
 }
@@ -1569,6 +1571,9 @@ void DCCPAgent::recv(Packet* pkt, Handler* handler){
 	output_ = false;
 	output_flag_ = false;
 
+	// UDP -> DTLS
+	pkt = extractDCCPPacket(pkt);
+	// DTLS -> SCTP
 	pkt = extractDCCPPacket(pkt);
 
 	//check if packet is valid
@@ -1983,6 +1988,45 @@ void DCCPAgent::advanceby(int delta){
 			
 		}
 	}
+}
+
+Packet* DCCPAgent::transformToDTLS(Packet *dccp_pkt, int nbytes){
+
+	int udp_max_size = 1500;
+	Packet *p = NULL;
+	int n;
+	int flag_seqno;
+
+	n = nbytes / udp_max_size;
+
+	if (nbytes == -1) {
+		printf("Error: sendmsg() for DTLS should not be -1\n");
+		return p;
+	}
+
+	flag_seqno = n + 1;
+
+	while (n-- > 0) {
+		p = allocpkt();
+		hdr_cmn::access(p)->size() = udp_max_size;
+		hdr_dtls* dt = hdr_dtls::access(p);
+		dt->seqno() = flag_seqno -n;
+		dt->length() = (u_int16_t) udp_max_size;
+		p->setdata((AppData*) dccp_pkt);
+	}
+
+	n = nbytes % size_;
+
+	if (n > 0) {
+		p = allocpkt();
+		hdr_cmn::access(p)->size() = n;
+		hdr_dtls* dt = hdr_dtls::access(p);
+		dt->seqno() = flag_seqno;
+		dt->length() = (u_int16_t) n;
+		p->setdata((AppData*) dccp_pkt);
+	}
+	idle();
+	return p;
 }
 
 Packet* DCCPAgent::transformToUDP(Packet *dccp_pkt)
