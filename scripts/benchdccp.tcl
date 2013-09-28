@@ -14,8 +14,8 @@ proc finish {} {
         close $f1
         close $f2
         #Call xgraph to display the results
-        exec xgraph out0.tr out1.tr out2.tr -geometry 800x400 &
-        #exec nam out.nam & 
+        exec xgraph out0.tr -geometry 800x400 &
+        #exec nam out.nam &
         exit 0
 }
 
@@ -24,7 +24,7 @@ proc attach-expoo-traffic { node sink size interval } {
 	set ns [Simulator instance]
 
 	#Create a UDP agent and attach it to the node
-	set source [new Agent/SCTP]
+	set source [new Agent/DCCP/TCPlike]
 	$ns attach-agent $node $source
 
 	#Create an Expoo traffic agent and set its configuration parameters
@@ -44,11 +44,14 @@ proc record {} {
         #Get an instance of the simulator
         set ns [Simulator instance]
         #Set the time after which the procedure should be called again
-        set time 0.1
+        set time 0.5
         #How many bytes have been received by the traffic sinks?
         set bw0 [$sink0 set bytes_]
         set bw1 [$sink1 set bytes_]
         set bw2 [$sink2 set bytes_]
+        puts "bw0: $bw0"
+        puts "bw1: $bw1"
+        puts "bw2: $bw2"
         #Get the current time
         set now [$ns now]
         #Calculate the bandwidth (in MBit/s) and write it to the files
@@ -68,9 +71,9 @@ set n1 [$ns node]
 set n2 [$ns node]
 set n3 [$ns node]
 set n4 [$ns node]
-set sink0 [new Agent/SCTP]
-set sink1 [new Agent/SCTP]
-set sink2 [new Agent/SCTP]
+set sink0 [new Agent/DCCP/TCPlike]
+set sink1 [new Agent/DCCP/TCPlike]
+set sink2 [new Agent/DCCP/TCPlike]
 
 $ns attach-agent $n4 $sink0
 $ns attach-agent $n4 $sink1
@@ -89,6 +92,9 @@ $ns at 0.0 "record"
 $ns at 10.0 "$source0 start"
 $ns at 10.0 "$source1 start"
 $ns at 10.0 "$source2 start"
+$ns at 10.0 "$sink0 listen"
+$ns at 10.0 "$sink1 listen"
+$ns at 10.0 "$sink2 listen"
 $ns at 50.0 "$source0 stop"
 $ns at 50.0 "$source1 stop"
 $ns at 50.0 "$source2 stop"

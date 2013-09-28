@@ -420,6 +420,10 @@ void DCCPAgent::delay_bind_init_all(){
 	delay_bind_init_one("num_ack_pkt_");
 	delay_bind_init_one("num_dataack_pkt_");
 	delay_bind_init_one("cscov_");
+
+	/*FOR BENCHMARKING
+	*/
+	//delay_bind_init_one("bytes_");
 	
 	Agent::delay_bind_init_all();
 
@@ -455,6 +459,11 @@ int DCCPAgent::delay_bind_dispatch(const char *varName, const char *localName, T
 	if (delay_bind(varName, localName, "num_ack_pkt_", &num_ack_pkt_, tracer)) return TCL_OK;
 	if (delay_bind(varName, localName, "num_dataack_pkt_", &num_dataack_pkt_, tracer)) return TCL_OK;
 	if (delay_bind(varName, localName, "cscov_", &cscov_, tracer)) return TCL_OK;
+
+	/* FOR BENCHMARKING
+	*/
+	if (delay_bind(varName, localName, "bytes_", &bytes_, tracer)) return TCL_OK;
+
 	return Agent::delay_bind_dispatch(varName, localName, tracer);
 }
 
@@ -1517,6 +1526,12 @@ DCCPAgent::DCCPAgent() : Agent(PT_DCCP){
 	num_data_pkt_ = 0;
 	num_ack_pkt_ = 0;
 	num_dataack_pkt_ = 0;
+
+	/* FOR BENCHMARKING
+	*/
+	bytes_ = 0;
+
+	bind("bytes_", &bytes_);
 }
 
 /* Destructor */
@@ -1565,12 +1580,17 @@ void DCCPAgent::recv(Packet* pkt, Handler* handler){
 	bool tell_cc = false;
 	bool tell_app = false;
 
+	/* FOR BENCHMARKING
+		calculate total bytes received
+	*/
+	bytes_ += hdr_cmn::access(pkt)->size();
+	printf("bytes_: %d\n", bytes_);
+
 	// UDP -> DTLS
 	pkt = extractDCCPPacket(pkt);
 	//printf("NULL? %d\n", pkt==NULL);
 	// DTLS -> SCTP
 	pkt = extractDCCPPacket(pkt);
-
 
 	hdr_dccp *dccph = hdr_dccp::access(pkt);
 	hdr_dccpack *dccpah = hdr_dccpack::access(pkt);

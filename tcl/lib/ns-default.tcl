@@ -1532,6 +1532,9 @@ Agent/DCCP/TCPlike set dack_delay_ 0.2
 
 Agent/DCCP/TCPlike set ackv_size_lim_ 10
 
+# FOR BENCHMARKING
+Agent/DCCP/TCPlike set bytes_ 0
+
 Agent/DCCP/TFRC set ccid_ 3
 Agent/DCCP/TFRC set use_ecn_local_ 1
 Agent/DCCP/TFRC set use_ecn_remote_ 1

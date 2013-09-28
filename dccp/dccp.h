@@ -553,14 +553,16 @@ public:
 
 	/* Encapsulation functions
 	*/
-
 	Packet* transformToUDP(Packet *dccp_pkt, int nbytes);
 	Packet* transformToDTLS(Packet *dccp_pkt, int nbytes);
 
 	/* Decapsulation function
 	*/
-
 	Packet* extractDCCPPacket(Packet *udp_pkt);
+
+	/* FOR BENCHMARKING
+	*/
+	int bytes_;
 };
 
 #endif
