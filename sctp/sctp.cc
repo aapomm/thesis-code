@@ -6831,6 +6831,7 @@ Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)
 
 	p = allocpkt();
 	hdr_cmn::access(p)->size() = size_;
+	hdr_cmn::access(p)->ptype() = 1;
 	hdr_rtp* rh = hdr_rtp::access(p);
 	rh->flags() = 0;
 	p->setdata((AppData*) sctp_pkt);
