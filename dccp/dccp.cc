@@ -1584,7 +1584,7 @@ void DCCPAgent::recv(Packet* pkt, Handler* handler){
 		calculate total bytes received
 	*/
 	bytes_ += hdr_cmn::access(pkt)->size();
-	printf("bytes_: %d\n", bytes_);
+	//printf("bytes_: %d\n", bytes_);
 
 	// UDP -> DTLS
 	pkt = extractDCCPPacket(pkt);

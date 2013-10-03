@@ -1582,6 +1582,9 @@ Agent/DCCP/TFRC set r_rtt_ 0.0
 Agent/DCCP/TFRC set r_p_ 0.0
 Agent/DCCP/TFRC set q_min_t_ 0.2
 
+#FOR BENCHMARKING
+Agent/DCCP/TFRC set bytes_ 0
+
 Agent/TCP/Linux set rtxcur_init_ 3
 Agent/TCP/Linux set maxrto_ 120
 Agent/TCP/Linux set minrto_ 0.2
