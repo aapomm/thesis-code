@@ -3,7 +3,7 @@
 
 BEGIN {
 
-printf("Calculating delay\n"); 
+#printf("Calculating delay\n"); 
      highest_packet_id = 0;
 
 }
