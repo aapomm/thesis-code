@@ -445,7 +445,7 @@ void Agent::recv(Packet* p, Handler*)
 	/*
 	 * didn't expect packet (or we're a null agent?)
 	 */
-	Packet::free(p);
+	//Packet::free(p);
 }
 
 /*

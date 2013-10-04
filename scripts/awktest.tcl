@@ -10,7 +10,7 @@ set nf [open out.nam w]
 $ns namtrace-all $nf
 
 #Open the traffic trace file to record all events
-set nd [open TFRC.tr w]
+set nd [open SCTP.tr w]
 $ns trace-all $nd
 
 #Define a 'finish' procedure
@@ -45,9 +45,9 @@ $ns duplex-link-op $n2 $n3 orient right
 $ns duplex-link-op $n2 $n3 queuePos 0.5
 
 #Setup a agents
-set udp [new Agent/DCCP/TFRC]
+set udp [new Agent/SCTP]
 $ns attach-agent $n1 $udp
-set null [new Agent/DCCP/TFRC]
+set null [new Agent/SCTP]
 $ns attach-agent $n3 $null
 $ns connect $udp $null
 $udp set fid_ 2
@@ -62,9 +62,17 @@ $cbr set rate_ 0.2mb
 #$cbr set interval_ 0.088
 $cbr set random_ false
 
+set em [new ErrorModel]
+$em set rate_ 0.01
+$em unit pkt
+$em ranvar [new RandomVariable/Uniform]
+$em drop-target [new Agent/Null]
+
+$ns lossmodel $em $n2 $n3
+
 #Schedule events
 $ns at 1.0 "$cbr start"
-$ns at 1.0 "$null listen"
+#$ns at 1.0 "$null listen"
 $ns at 12.0 "$cbr stop"
 
 #Call the finish procedure after 5 seconds of simulation time

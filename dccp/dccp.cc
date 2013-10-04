@@ -2015,7 +2015,8 @@ void DCCPAgent::advanceby(int delta){
 
 Packet* DCCPAgent::transformToDTLS(Packet *dccp_pkt, int nbytes){
 
-	int udp_max_size = 1500;
+	//int udp_max_size = 1500;
+	int udp_max_size = nbytes;
 	Packet *p = NULL;
 	int n;
 	int flag_seqno;
@@ -2065,7 +2066,7 @@ Packet* DCCPAgent::transformToUDP(Packet *dccp_pkt, int nbytes)
 	}
 
 	p = allocpkt();
-	hdr_cmn::access(p)->size() = size_;
+	hdr_cmn::access(p)->size() = nbytes;
 	hdr_rtp* rh = hdr_rtp::access(p);
 	rh->flags() = 0;
 	p->setdata((AppData*) dccp_pkt);

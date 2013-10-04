@@ -6766,7 +6766,8 @@ int SctpAgent::CalculateBytesInFlight()
 
 Packet* SctpAgent::transformToDTLS(Packet *sctp_pkt, int nbytes){
 
-  int udp_max_size = 1500; /*fragmentation will be based on the UDP maximum packet size*/
+  //int udp_max_size = 1500; /*fragmentation will be based on the UDP maximum packet size*/
+  int udp_max_size = nbytes;
   Packet *p = NULL;
   int n;
   int flag_seqno;
@@ -6810,7 +6811,8 @@ Packet* SctpAgent::transformToDTLS(Packet *sctp_pkt, int nbytes){
 
 Packet* SctpAgent::transformToUDP(Packet *sctp_pkt, int nbytes)
 {
-	int size_ = 1500;
+	//int size_ = 1500;
+	int size_ = nbytes;
 	Packet *p = NULL;
 	//int n;
 
