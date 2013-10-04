@@ -21,7 +21,7 @@ proc finish {} {
         close $nf
         close $nd
         #Execute NAM on the trace file
-        #exec nam out.nam &
+        exec nam out.nam &
         exit 0
 }
 
@@ -46,8 +46,11 @@ $ns duplex-link-op $n2 $n3 queuePos 0.5
 
 #Setup a agents
 set udp [new Agent/SCTP]
+#$udp set numUnrelStreams_ 1
 $ns attach-agent $n1 $udp
+
 set null [new Agent/SCTP]
+#$null set numUnrelStreams_ 1
 $ns attach-agent $n3 $null
 $ns connect $udp $null
 $udp set fid_ 2
@@ -58,12 +61,12 @@ set cbr [new Application/Traffic/CBR]
 $cbr attach-agent $udp
 $cbr set type_ packet
 $cbr set packet_size_ 1000
-$cbr set rate_ 0.2mb
+$cbr set rate_ 0.5mb
 #$cbr set interval_ 0.088
 $cbr set random_ false
 
 set em [new ErrorModel]
-$em set rate_ 0.01
+$em set rate_ 0.1
 $em unit pkt
 $em ranvar [new RandomVariable/Uniform]
 $em drop-target [new Agent/Null]
@@ -82,6 +85,7 @@ $ns at 15.0 "finish"
 puts "CBR packet size = [$cbr set packet_size_]"
 puts "CBR interval = [$cbr set interval_]"
 puts "CBR rate = [$cbr set rate_]"
+puts "[$udp set numUnrelStreams_]"
 
 #Run the simulation
 $ns run
