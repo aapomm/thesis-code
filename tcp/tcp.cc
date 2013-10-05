@@ -765,6 +765,7 @@ void TcpAgent::output(int seqno, int reason)
 	else if (useHeaders_ == true) {
 		hdr_cmn::access(p)->size() += headersize();
 	}
+	int p_size = hdr_cmn::access(p)->size();
         hdr_cmn::access(p)->size();
 
 	/* if no outstanding data, be sure to set rtx timer again */
@@ -777,9 +778,9 @@ void TcpAgent::output(int seqno, int reason)
         ndatabytes_ += databytes;
 
 	// convert packet to DTLS	
-	p = transformToDTLS(p, hdr_cmn::access(p)->size());
+	p = transformToDTLS(p, p_size);
 	// convert packet to UDP
-	p = transformToUDP(p, hdr_cmn::access(p)->size());
+	p = transformToUDP(p,  p_size);
 
 	send(p, 0);
 	if (seqno == curseq_ && seqno > maxseq_)
