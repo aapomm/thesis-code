@@ -10,7 +10,7 @@ set nf [open out.nam w]
 $ns namtrace-all $nf
 
 #Open the traffic trace file to record all events
-set nd [open SCTP.tr w]
+set nd [open TCPlike.tr w]
 $ns trace-all $nd
 
 #Define a 'finish' procedure
@@ -21,7 +21,7 @@ proc finish {} {
         close $nf
         close $nd
         #Execute NAM on the trace file
-        exec nam out.nam &
+        #exec nam out.nam &
         exit 0
 }
 
@@ -45,11 +45,11 @@ $ns duplex-link-op $n2 $n3 orient right
 $ns duplex-link-op $n2 $n3 queuePos 0.5
 
 #Setup a agents
-set udp [new Agent/SCTP]
+set udp [new Agent/DCCP/TCPlike]
 #$udp set numUnrelStreams_ 1
 $ns attach-agent $n1 $udp
 
-set null [new Agent/SCTP]
+set null [new Agent/DCCP/TCPlike]
 #$null set numUnrelStreams_ 1
 $ns attach-agent $n3 $null
 $ns connect $udp $null
@@ -63,19 +63,17 @@ $cbr set type_ packet
 $cbr set packet_size_ 1000
 $cbr set rate_ 0.5mb
 #$cbr set interval_ 0.088
-$cbr set random_ false
 
 set em [new ErrorModel]
-$em set rate_ 0.1
+$em set rate_ 0.01
 $em unit pkt
 $em ranvar [new RandomVariable/Uniform]
 $em drop-target [new Agent/Null]
-
 $ns lossmodel $em $n2 $n3
 
 #Schedule events
 $ns at 1.0 "$cbr start"
-#$ns at 1.0 "$null listen"
+$ns at 1.0 "$null listen"
 $ns at 12.0 "$cbr stop"
 
 #Call the finish procedure after 5 seconds of simulation time
@@ -84,8 +82,7 @@ $ns at 15.0 "finish"
 #Print CBR packet size and interval
 puts "CBR packet size = [$cbr set packet_size_]"
 puts "CBR interval = [$cbr set interval_]"
-puts "CBR rate = [$cbr set rate_]"
-puts "[$udp set numUnrelStreams_]"
+puts "CBR rate = [$cbr set rate_]" 
 
 #Run the simulation
 $ns run
