@@ -61,7 +61,7 @@ $null set fid_ 1
 set cbr [new Application/SctpApp1]
 $cbr attach-agent $udp
 $cbr set type_ packet
-$cbr set packet_size_ 1000
+$cbr set packetSize_ 1000
 $cbr set rate_ 0.5mb
 $cbr set numUnreliable_ 1
 #$cbr set interval_ 0.088
@@ -82,7 +82,7 @@ $ns at 12.0 "$cbr stop"
 $ns at 15.0 "finish"
 
 #Print CBR packet size and interval
-puts "CBR packet size = [$cbr set packet_size_]"
+puts "CBR packet size = [$cbr set packetSize_]"
 puts "CBR interval = [$cbr set interval_]"
 puts "CBR rate = [$cbr set rate_]" 
 
