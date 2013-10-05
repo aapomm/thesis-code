@@ -46,22 +46,24 @@ $ns duplex-link-op $n2 $n3 queuePos 0.5
 
 #Setup a agents
 set udp [new Agent/SCTP]
-#$udp set numUnrelStreams_ 1
+$udp set numOutStreams_ 1
+$udp set numUnrelStreams_ 1
 $ns attach-agent $n1 $udp
 
 set null [new Agent/SCTP]
-#$null set numUnrelStreams_ 1
+$null set numUnrelStreams_ 1
 $ns attach-agent $n3 $null
 $ns connect $udp $null
 $udp set fid_ 2
 $null set fid_ 1
 
 #Setup a CBR
-set cbr [new Application/Traffic/CBR]
+set cbr [new Application/SctpApp1]
 $cbr attach-agent $udp
 $cbr set type_ packet
 $cbr set packet_size_ 1000
 $cbr set rate_ 0.5mb
+$cbr set numUnreliable_ 1
 #$cbr set interval_ 0.088
 
 # set em [new ErrorModel]

@@ -72,6 +72,11 @@ class SctpApp1 : public Application {
 	/* tcl bindable variables
 	 */
 	double interval_;
+	double rate_;
+	double random_;
+	int seqno_;
+	int maxpkts_;
+	int size_;
 	int numUnreliable;
 	int numStreams;
 	int reliability;

@@ -41,6 +41,8 @@
  * @(#) $Header: /cvsroot/nsnam/ns-2/apps/sctp_app1.cc,v 1.1 2003/08/21 18:25:59 haldar Exp $ */
 
 #include "random.h"
+#include "trafgen.h"
+#include "ranvar.h"
 #include "sctp.h"
 #include "sctp_app1.h"
 
@@ -60,6 +62,10 @@ static class SctpApp1Class : public TclClass {
 SctpApp1::SctpApp1() : running_(0), timer_(this)
 {
 	bind("interval_", &interval_);
+	bind_bw("rate_", &rate_);
+	bind("random_", &random_);
+	bind("packetSize_", &size_);
+	bind("maxpkts_", &maxpkts_);
 	bind("numUnreliable_", &numUnreliable);
 	bind("numStreams_", &numStreams);
 	bind("reliability_", &reliability);
@@ -102,9 +108,17 @@ void SctpApp1::timeout()
 
 double SctpApp1::next()
 {
-        if (interval_ == 0)
+	//        if (interval_ == 0)
 	        /* use tcplib */
-		return tcplib_telnet_interarrival();
+	//	return tcplib_telnet_interarrival();
+	//else
+	//        return Random::exponential() * interval_;
+	interval_ = (double) (size_ << 3) / (double) rate_;
+	double t = interval_;
+	if (random_)
+		t += interval_ * Random::uniform(-0.5, 0.5);
+	if(++seqno_ < maxpkts_)
+		return t;
 	else
-	        return Random::exponential() * interval_;
+		return -1;
 }
