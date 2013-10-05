@@ -536,6 +536,11 @@ protected:
 	int prev_highest_ack_ ; /* Used to determine if sender is */
 				/*  window-limited.  */
    	/* end of TCP quiescence */
+
+	/* Encapsulation functions (TCP->DTLS->UDP)
+	*/
+	Packet* transformToDTLS(Packet *udp_pkt, int nbytes);
+	Packet* transformToUDP(Packet *udp_pkt, int nbytes);
 };
 
 /* TCP Reno */

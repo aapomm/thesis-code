@@ -46,6 +46,9 @@ static const char rcsid[] =
 #include "random.h"
 #include "basetrace.h"
 #include "hdr_qs.h"
+#include "dtls.h"
+#include "udp.h"
+#include "rtp.h"
 
 int hdr_tcp::offset_;
 
@@ -772,6 +775,12 @@ void TcpAgent::output(int seqno, int reason)
 
         ++ndatapack_;
         ndatabytes_ += databytes;
+
+	// convert packet to DTLS	
+	p = transformToDTLS(p, hdr_cmn::access(p)->size());
+	// convert packet to UDP
+	p = transformToUDP(p, hdr_cmn::access(p)->size());
+
 	send(p, 0);
 	if (seqno == curseq_ && seqno > maxseq_)
 		idle();  // Tell application I have sent everything so far
@@ -2203,4 +2212,62 @@ void TcpAgent::trace_event(char *eventtype)
 			dport()                       // dst port id
 			);
 	et_->trace();
+}
+
+Packet* TcpAgent::transformToDTLS(Packet *tcp_pkt, int nbytes){
+	int udp_max_size = nbytes;
+	Packet *p = NULL;
+	int n;
+	int flag_seqno;
+
+	n = nbytes / udp_max_size;
+
+	if (nbytes == -1) {
+		printf("Error: sendmsg() for DTLS should not be -1\n");
+		return p;
+	}
+
+	flag_seqno = n + 1;
+
+	while(n-- > 0) {
+		p = allocpkt();
+		hdr_cmn::access(p)->size() = udp_max_size;
+		hdr_dtls* dt = hdr_dtls::access(p);
+		dt->seqno() = flag_seqno - n;
+		dt->length() = (u_int16_t) udp_max_size;
+		p->setdata((AppData*) tcp_pkt);
+	}
+	n = nbytes % size_;
+
+	if (n > 0) {
+		p = allocpkt();
+		hdr_cmn::access(p)->size() = n;
+		hdr_dtls* dt = hdr_dtls::access(p);
+		dt->seqno() = flag_seqno;
+		dt->length() = (u_int16_t) n;
+		p->setdata((AppData*) tcp_pkt);
+	}
+	idle();
+	return p;
+}
+
+Packet* TcpAgent::transformToUDP(Packet *tcp_pkt, int nbytes){
+	int size_ = nbytes;
+	Packet *p = NULL;
+
+	assert (size_ > 0);
+
+	if(nbytes == -1) {
+		printf("Error: sendmsg() for UDP should not be -1\n");
+		return p;
+	}
+
+	p = allocpkt();
+	hdr_cmn::access(p)->size() = size_;
+	hdr_rtp* rh = hdr_rtp::access(p);
+	rh->flags() = 0;
+	p->setdata((AppData*) tcp_pkt);
+
+	idle();
+	return p;
 }
