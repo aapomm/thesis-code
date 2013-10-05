@@ -504,6 +504,10 @@ Application/SctpApp1 set interval_ 1.0
 Application/SctpApp1 set numStreams_ 1
 Application/SctpApp1 set numUnreliable_ 0
 Application/SctpApp1 set reliability_ 0
+Application/SctpApp1 set rate_ 448Kb	;# corresponds to interval of 3.75ms
+Application/SctpApp1 set packetSize_ 210
+Application/SctpApp1 set random_ 0
+Application/SctpApp1 set maxpkts_ 268435456; # 0x10000000
 
 RandomVariable/Uniform set min_ 0.0
 RandomVariable/Uniform set max_ 1.0
