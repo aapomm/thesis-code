@@ -111,6 +111,8 @@ protected:
         virtual void delay_bind_init_all();
         virtual int delay_bind_dispatch(const char *varName, const char *localName, TclObject *tracer);
 
+	Packet* extractTCPPacket(Packet *pkt);
+
 	Acker* acker_;
 	int ts_echo_bugfix_;
 	int ts_echo_rfc1323_; 	// conforms to rfc1323 for timestamps echo

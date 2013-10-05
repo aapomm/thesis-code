@@ -46,7 +46,7 @@ $ns duplex-link-op $n2 $n3 queuePos 0.5
 
 #Setup a agents
 set udp [new Agent/SCTP]
-#$udp set numUnrelStreams_ 1
+$udp set numUnrelStreams_ 1
 $ns attach-agent $n1 $udp
 
 set null [new Agent/SCTP]

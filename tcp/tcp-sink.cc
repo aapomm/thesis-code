@@ -354,9 +354,20 @@ void TcpSink::add_to_ack(Packet*)
 	return;
 }
 
+Packet* TcpSink::extractTCPPacket(Packet *pkt)
+{
+	return (Packet*) pkt->userdata();
+}
 
 void TcpSink::recv(Packet* pkt, Handler*)
 {
+
+	// Extract DTLS packet from UDP packet
+	pkt = extractTCPPacket(pkt);
+	
+	// Extract TCP packet from DTLS packet
+	pkt = extractTCPPacket(pkt);
+
 	int numToDeliver;
 	int numBytes = hdr_cmn::access(pkt)->size();
 	// number of bytes in the packet just received
