@@ -52,10 +52,10 @@ $ns duplex-link-op $r1 $r2 queuePos 0.5
 
 
 # create agents
-set dccp0 [new Agent/DCCP/TCPlike]
+set dccp0 [new Agent/DCCP/TFRC]
 $ns attach-agent $n0 $dccp0
 $dccp0 set fid_ 2
-set dccp1 [new Agent/DCCP/TCPlike]
+set dccp1 [new Agent/DCCP/TFRC]
 $ns attach-agent $d1 $dccp1
 $dccp1 set fid_ 2
 set sinknode [new Agent/TCPSink]
