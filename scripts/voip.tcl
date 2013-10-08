@@ -70,13 +70,13 @@ set sinknode5 [new Agent/TCPSink]
 $ns attach-agent $d1 $sinknode5
 set tcp1 [new Agent/TCP/Newreno]
 $ns attach-agent $n1 $tcp1
-set tcp2 [new Agent/TCP]
+set tcp2 [new Agent/TCP/Newreno]
 $ns attach-agent $n2 $tcp2
-set tcp3 [new Agent/TCP]
+set tcp3 [new Agent/TCP/Newreno]
 $ns attach-agent $n3 $tcp3
-set tcp4 [new Agent/TCP]
+set tcp4 [new Agent/TCP/Newreno]
 $ns attach-agent $n4 $tcp4
-set tcp5 [new Agent/TCP]
+set tcp5 [new Agent/TCP/Newreno]
 $ns attach-agent $n5 $tcp5
 
 # connect agents
