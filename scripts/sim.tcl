@@ -117,12 +117,12 @@ for {set i 0} {$i < 20} {incr i} {
 set sctp_traf [new Application/Traffic/Pareto]
 $sctp_traf set shape_ 1.0
 $sctp_traf set rate_ 0.4mb
-$sctp_traf attach-agent $sctp0_n
+$sctp_traf attach-agent $sctp0
 
 set tcp_traf [new Application/Traffic/Pareto]
 $tcp_traf set shape_ 1.0
 $tcp_traf set rate_ 0.4mb
-$tcp_traf attach-agent $tcp0_n
+$tcp_traf attach-agent $tcp0
 
 ###################################################
 
@@ -135,14 +135,14 @@ $ns connect $tcp0 $tcp1
 ###################################################
 
 ################Run traffic########################
-# for {set i 0} {$i < 20} {incr i} {
-# 	$ns at 0.0 "$traf($i) start"
-# 	$ns at 10.0 "$traf($i) stop"
-# }
+for {set i 0} {$i < 20} {incr i} {
+	$ns at 0.0 "$traf($i) start"
+	$ns at 10.0 "$traf($i) stop"
+}
 $ns at 0.0 "$sctp_traf start"
-# $ns at 0.0 "$tcp_traf start"
+$ns at 0.0 "$tcp_traf start"
 $ns at 10.0 "$sctp_traf stop"
-# $ns at 10.0 "$tcp_traf stop"
+$ns at 10.0 "$tcp_traf stop"
 
 ###################################################
 
