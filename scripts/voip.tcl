@@ -117,24 +117,24 @@ $cbr4 attach-agent $tcp4
 $cbr5 attach-agent $tcp5
 
 # start traffic
-$ns at 0.5 "$cbr0 start"
-$ns at 0.5 "$cbr1 start"
-$ns at 0.5 "$cbr2 start"
-$ns at 0.5 "$cbr3 start"
-$ns at 0.5 "$cbr4 start"
-$ns at 0.5 "$cbr5 start"
-$ns at 0.5 "$dccp1 listen"
+$ns at 0.0 "$cbr0 start"
+$ns at 10.0 "$cbr1 start"
+$ns at 20.0 "$cbr2 start"
+$ns at 30.0 "$cbr3 start"
+$ns at 40.0 "$cbr4 start"
+$ns at 50.0 "$cbr5 start"
+$ns at 0.0 "$dccp1 listen"
 
 # stop up traffic
-$ns at 10.0 "$cbr0 stop"
-$ns at 10.0 "$cbr1 stop"
-$ns at 10.0 "$cbr2 stop"
-$ns at 10.0 "$cbr3 stop"
-$ns at 10.0 "$cbr4 stop"
-$ns at 10.0 "$cbr5 stop"
+# $ns at 10.0 "$cbr0 stop"
+# $ns at 10.0 "$cbr1 stop"
+# $ns at 10.0 "$cbr2 stop"
+# $ns at 10.0 "$cbr3 stop"
+# $ns at 10.0 "$cbr4 stop"
+# $ns at 10.0 "$cbr5 stop"
 
 # finish simulation
-$ns at 20.0 "finish"
+$ns at 100.0 "finish"
 
 # run the simulation
 $ns run
