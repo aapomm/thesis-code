@@ -58,9 +58,17 @@ $dccp0 set fid_ 2
 set dccp1 [new Agent/DCCP/TFRC]
 $ns attach-agent $d1 $dccp1
 $dccp1 set fid_ 2
-set sinknode [new Agent/TCPSink]
-$ns attach-agent $d1 $sinknode
-set tcp1 [new Agent/TCP]
+set sinknode1 [new Agent/TCPSink]
+$ns attach-agent $d1 $sinknode1
+set sinknode2 [new Agent/TCPSink]
+$ns attach-agent $d1 $sinknode2
+set sinknode3 [new Agent/TCPSink]
+$ns attach-agent $d1 $sinknode3
+set sinknode4 [new Agent/TCPSink]
+$ns attach-agent $d1 $sinknode4
+set sinknode5 [new Agent/TCPSink]
+$ns attach-agent $d1 $sinknode5
+set tcp1 [new Agent/TCP/Newreno]
 $ns attach-agent $n1 $tcp1
 set tcp2 [new Agent/TCP]
 $ns attach-agent $n2 $tcp2
@@ -73,11 +81,11 @@ $ns attach-agent $n5 $tcp5
 
 # connect agents
 $ns connect $dccp0 $dccp1
-$ns connect $tcp1 $sinknode
-$ns connect $tcp2 $sinknode
-$ns connect $tcp3 $sinknode
-$ns connect $tcp4 $sinknode
-$ns connect $tcp5 $sinknode
+$ns connect $tcp1 $sinknode1
+$ns connect $tcp2 $sinknode2
+$ns connect $tcp3 $sinknode3
+$ns connect $tcp4 $sinknode4
+$ns connect $tcp5 $sinknode5
 
 # create CBR applications
 
