@@ -66,7 +66,7 @@
 #define DCCP_TFRC_MIN_T 0.2          //T value for quiescence detection
 #define DCCP_TFRC_QUIESCENCE_OPT_RATIO 1
 
-#define DCCP_TFRC_STD_PACKET_SIZE    500     /* standard packet size*/
+#define DCCP_TFRC_STD_PACKET_SIZE    1460     /* standard packet size*/
 
 
 /* 
@@ -90,7 +90,7 @@ enum dccp_tfrc_s_state { TFRC_S_STATE_NO_SENT = 0,
 #define DCCP_TFRC_RTT_Q   0.9   /* RTT Filter constant */ 
 #define DCCP_TFRC_RTT_Q2  0.9   /* Long term RTT filter constant */
 #define DCCP_TFRC_MBI  64.0     /* max backoff interval */
-#define DCCP_TFRC_INIT_RTO  2.0 /* initial rto value */
+#define DCCP_TFRC_INIT_RTO  3.0 /* initial rto value */
 
 
 /* Packet history */
