@@ -92,12 +92,14 @@ set sctp0 [new Agent/SCTP]
 $ns attach-agent $sctp0_n $sctp0
 
 set sctp1 [new Agent/SCTP]
+$sctp1 set fid_ 1
 $ns attach-agent $sctp1_n $sctp1
 
 set tcp0 [new Agent/TCP]
 $ns attach-agent $tcp0_n $tcp0
 
 set tcp1 [new Agent/TCPSink]
+$tcp1 set fid_ 2
 $ns attach-agent $tcp1_n $tcp1
 
 set udp_recv [new Agent/UDP]
