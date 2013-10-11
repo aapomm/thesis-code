@@ -1036,7 +1036,8 @@ DCCPTFRCAgent::DCCPTFRCAgent() : DCCPAgent() {
 	s_r_sqmean_ = 0.0;
 	s_p_ = 0.0;
 	s_smallest_p_ = DCCP_TFRC_SMALLEST_P;
-	
+
+	/* Time Last Doubled (RFC 3448) */	
 	s_t_ld_ = -1.0;
 
 	s_last_win_count_ = 0;
@@ -1625,7 +1626,7 @@ void DCCPTFRCAgent::tfrc_send_packet_sent(Packet *pkt, int moreToSend, int datas
 	}
 }
 
-/* Similar to send_packetRecv() */
+/* Sender receives a packet. Similar to send_packetRecv() */
 void DCCPTFRCAgent::tfrc_send_packet_recv(Packet *pkt){
 	hdr_dccp *dccph = hdr_dccp::access(pkt);
 	hdr_dccpack *dccpah = hdr_dccpack::access(pkt);
@@ -1659,7 +1660,7 @@ void DCCPTFRCAgent::tfrc_send_packet_recv(Packet *pkt){
 	case TFRC_S_STATE_NO_FBACK :
 	case TFRC_S_STATE_FBACK :
 		/* Calculate new round trip sample by
-		 * R_sample = (t_now - t_recvdata)-t_delay;
+		 * R_sample = (t_now - t_recvdata)-t_delay (RFC3448 section 4.3: sender receives feedback);
 		 */
 
 		/* get t_recvdata from history */

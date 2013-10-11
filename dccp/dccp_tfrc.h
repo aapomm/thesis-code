@@ -66,6 +66,9 @@
 #define DCCP_TFRC_MIN_T 0.2          //T value for quiescence detection
 #define DCCP_TFRC_QUIESCENCE_OPT_RATIO 1
 
+/* Initially, X (the sending rate) is set to 1 packet per second
+ * as per RFC3448
+ */
 #define DCCP_TFRC_STD_PACKET_SIZE    500     /* standard packet size*/
 
 
