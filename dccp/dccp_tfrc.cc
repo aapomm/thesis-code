@@ -1231,6 +1231,12 @@ void DCCPTFRCAgent::timeout(int tno){
  *      R - round trip time (int seconds)
  *      p - loss event rate
  * ret: maximum allowed sending rate
+ * Generally, temp is:
+ * R*sqrt(2*b*p/3) + (t_RTO * (3*sqrt(3*b*p/8) * p * (1+32*p^2)))
+ * Here,
+ * b = 1,
+ * t_RTO = 4*R
+ * as per recommendations in RFC3448.
  */
 inline double DCCPTFRCAgent::tfrc_calcX(u_int16_t s, double R, double p){
 	double temp = R*sqrt(2*p/3) + (4*R*(3*sqrt(3*p/8))*p*(1+32*p*p));
