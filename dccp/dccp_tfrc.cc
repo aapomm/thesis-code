@@ -1318,8 +1318,6 @@ void DCCPTFRCAgent::tfrc_updateX(double t_now){
 		s_x_calc_ = tfrc_calcX(s_s_, s_rtt_, s_p_);
 		temp = 2*s_x_recv_;
 		if (s_x_calc_ < temp)
-			temp = s_x_calc_;
-		s_x_ = temp;
 		if(temp < ((double) s_s_)/s_t_mbi_)
 			s_x_ = ((double) s_s_)/s_t_mbi_;
 		
@@ -1436,6 +1434,8 @@ void DCCPTFRCAgent::tfrc_time_no_feedback(){
 
 
 
+
+
 /* Similar to send_askPermToSend() */
 int DCCPTFRCAgent::tfrc_send_packet(int datasize){
 	u_int8_t answer = 0;
@@ -1467,7 +1467,7 @@ int DCCPTFRCAgent::tfrc_send_packet(int datasize){
 
 		/* start send timer */
 	
-		/* Calculate new t_ipi */
+		/* Calculate new t_ipi for the first time */
 		CALCNEWTIPI(cb);
 		s_t_nom_ += s_t_ipi_;  /* t_nom += t_ipi */
 
@@ -1666,12 +1666,6 @@ void DCCPTFRCAgent::tfrc_send_packet_recv(Packet *pkt){
 	case TFRC_S_STATE_NO_FBACK :
 	case TFRC_S_STATE_FBACK :
 		/* Calculate new round trip sample by
-		 * R_sample = (t_now - t_recvdata)-t_delay (RFC3448 section 4.3: sender receives feedback);
-		 */
-
-		/* get t_recvdata from history */
-		elm = STAILQ_FIRST(&(s_hist_));
-		while (elm != NULL) {
 			if (elm->seq_num_ == dccpah->ack_num_)
 				break;
 			elm = STAILQ_NEXT(elm, linfo_);
@@ -1795,6 +1789,12 @@ void DCCPTFRCAgent::tfrc_send_packet_recv(Packet *pkt){
 
 /* Find a data packet in history
  * args:  cb - ccb of receiver
+ *        elm - pointer to element (variable)
+ *        num - number in history (variable)
+ * returns:  elm points to found packet, otherwise NULL
+ */
+#define TFRC_RECV_FINDDATAPACKET(cb,elm,num) \
+  do{ \
  *        elm - pointer to element (variable)
  *        num - number in history (variable)
  * returns:  elm points to found packet, otherwise NULL
@@ -2041,12 +2041,6 @@ void DCCPTFRCAgent::tfrc_recv_updateLI(){
 				debug("%f, DCCP/TFRC(%s)::tfrc_recv_updateLI() - Loss belongs to previous loss event\n", now(), name());
 		}
 	}
-	
-	if(TAILQ_FIRST(&(r_li_hist_)) != NULL){
-		/* calculate interval to last loss event */
-
-		elm = STAILQ_FIRST(&r_hist_);
-		if (elm->seq_num_ < TAILQ_FIRST(&(r_li_hist_))->seq_num_){
 			fprintf(stderr, "updating the recent li : seq_num_%d < last_loss_start %d\n",elm->seq_num_, TAILQ_FIRST(&(r_li_hist_))->seq_num_);
 			fflush(stdout);
 			abort();
@@ -2160,7 +2154,7 @@ void DCCPTFRCAgent::tfrc_recv_packet_recv(Packet* pkt, int dataSize){
 			tfrc_recv_updateLI();
 			p_prev = r_p_;
 			
-			/* Calculate loss event rate */
+			/* Calculate loss event rate - section 5.4 */
 			if(!TAILQ_EMPTY(&(r_li_hist_))){
 				r_p_ = 1/tfrc_calcImean();
 			}  
