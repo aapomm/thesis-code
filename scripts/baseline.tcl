@@ -6,7 +6,7 @@ $ns color 2 Red
 set nf [open out.nam w]
 $ns namtrace-all $nf
 
-set nd [open BASE.tr w]
+set nd [open TFRC.tr w]
 $ns trace-all $nd
 
 proc finish {} {
@@ -53,16 +53,16 @@ $ns duplex-link $sctp1_n $int1_n 100Mb 25ms DropTail
 $ns duplex-link $udp1_n $int1_n 100Mb 25ms DropTail
 $ns duplex-link $tcp1_n $int1_n 100Mb 25ms DropTail
 
-$ns duplex-link $int0_n $int1_n 100Mb 25ms DropTail
-# $ns queue-limit $int0_n $int1_n 5
+$ns duplex-link $int0_n $int1_n 5Mb 25ms DropTail
+$ns queue-limit $int0_n $int1_n 4
 # $ns duplex-link-op $int0_n $int1_n queuePos 0.5
 
-set sctp0 [new Agent/SCTP]
+set sctp0 [new Agent/SCTP/Ratehybrid]
 $sctp0 set fid_ 1
 $ns attach-agent $sctp0_n $sctp0
 #$ns multihome-attach-agent $sctp0_n $sctp0
 
-set sctp1 [new Agent/SCTP]
+set sctp1 [new Agent/SCTP/Ratehybrid]
 $ns attach-agent $sctp1_n $sctp1
 
 set udp0 [new Agent/UDP]

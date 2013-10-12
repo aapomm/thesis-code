@@ -58,6 +58,8 @@ static const char rcsid[] =
 #define	MIN(x,y)	(((x)<(y))?(x):(y))
 #define	MAX(x,y)	(((x)>(y))?(x):(y))
 
+#define SEND_RATE 0.01
+
 int hdr_sctp::offset_;
 
 static class SCTPHeaderClass : public PacketHeaderClass 
@@ -102,6 +104,10 @@ SctpAgent::SctpAgent() : Agent(PT_SCTP)
   opT1InitTimer = new T1InitTimer(this);
   opT1CookieTimer = new T1CookieTimer(this);
   eState = SCTP_STATE_UNINITIALIZED;
+  opSendTimer = new SendTimer(this);
+
+  // opSendTimer->sched(SEND_RATE);
+
 }
 
 SctpAgent::~SctpAgent()
@@ -2678,8 +2684,10 @@ void SctpAgent::FastRtx()
 	  /* Lukasz Budzisz : 03/09/2006
 	     Section 7.2.3 of rfc4960 
 	   */
+    // printf("ASDFASDFASDFASDF\n");
 	  spCurrBuffData->spDest->iSsthresh 
 	    = MAX(spCurrBuffData->spDest->iCwnd/2, 4 * (int) uiMaxDataSize);
+      // = MAX(spCurrBuffData->spDest->iCwnd*(1/4), 4 * (int) uiMaxDataSize);
 	  spCurrBuffData->spDest->iCwnd = spCurrBuffData->spDest->iSsthresh;
 	  spCurrBuffData->spDest->iPartialBytesAcked = 0; //reset
 	  tiCwnd++; // trigger changes for trace to pick up
@@ -5795,6 +5803,9 @@ void SctpAgent::recv(Packet *opInPkt, Handler*)
 
   DBG_I(recv);
 
+  // printf("time: %lf\n", Scheduler::instance().clock());
+  // getchar();
+
   hdr_ip *spIpHdr = hdr_ip::access(opInPkt);
   PacketData *opInPacketData = (PacketData *) opInPkt->userdata();
   u_char *ucpInData = opInPacketData->data();
@@ -5961,8 +5972,10 @@ void SctpAgent::SendMuch()
    * layer. If so, then send as much as we can.
    */
   while((spNewTxDest->iOutstandingBytes < spNewTxDest->iCwnd) &&
+   // while((spNewTxDest->iOutstandingBytes < 1) &&
 	(eDataSource == DATA_SOURCE_INFINITE || sAppLayerBuffer.uiLength != 0))
     {
+      // printf("outstandingbytes: %d\n", spNewTxDest->iOutstandingBytes);
       DBG_PL(SendMuch, "uiAdvancedPeerAckPoint=%d uiCumAckPoint=%d"), 
 	uiAdvancedPeerAckPoint, uiCumAckPoint DBG_PR;
       DBG_PL(SendMuch, "uiPeerRwnd=%d"), uiPeerRwnd DBG_PR;
@@ -6022,9 +6035,14 @@ void SctpAgent::SendMuch()
 	}
       else
 	{
+    printf("ASDFASDF");
 	  break;
-	}      
+	}
+    // printf("new outstandingbytes: %d\n", spNewTxDest->iOutstandingBytes);
+    // break;      
     }
+
+    // getchar();
 
   if(iOutDataSize > 0)  // did we send anything??
     {
@@ -6200,6 +6218,7 @@ void SctpAgent::sendmsg(int iNumBytes, const char *cpFlags)
 	  if(eSendNewDataChunks == TRUE && eMarkedChunksPending == FALSE) 
 	    {
 	      SendMuch();
+        printf("SENDMSG\n");
 	      eSendNewDataChunks = FALSE;
 	    }
 	}
@@ -6740,4 +6759,13 @@ int SctpAgent::CalculateBytesInFlight()
     }
   
   return totalOutstanding;
+}
+
+void SctpAgent::SendTimerExpiration(){
+  printf("SENDSEND. %d\n", opSendTimer->status());
+  opSendTimer->resched(SEND_RATE);
+}
+
+void SendTimer::expire(Event *){
+  opAgent->SendTimerExpiration();
 }
