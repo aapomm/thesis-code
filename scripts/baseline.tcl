@@ -17,6 +17,7 @@ proc finish {} {
         # exec nam out.nam &
         exit 0
 }
+$ns node-config -macType Mac/802_3
 
 set tcp0_n [$ns node]
 set tcp1_n [$ns node]
