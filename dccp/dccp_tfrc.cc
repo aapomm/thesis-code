@@ -1015,6 +1015,7 @@ DCCPTFRCAgent::DCCPTFRCAgent() : DCCPAgent() {
 	s_timer_send_ = new DCCPTFRCSendTimer(this);
 	s_timer_no_feedback_ = new DCCPTFRCNoFeedbackTimer(this);
 
+	/* Set X = size of one packet */
 	s_initial_x_ = DCCP_TFRC_INIT_SEND_RATE;
 	s_initial_rto_ = DCCP_TFRC_INIT_RTO;
 
@@ -1025,7 +1026,8 @@ DCCPTFRCAgent::DCCPTFRCAgent() : DCCPAgent() {
 	s_s_ = DCCP_TFRC_STD_PACKET_SIZE;
 	s_x_ = s_initial_x_;
 	s_x_inst_ = s_initial_x_;
-	
+
+	/* use oscillation prevention */	
 	s_use_osc_prev_ = 1;  
 	
 	s_x_recv_ = 0.0;
@@ -1345,7 +1347,7 @@ void DCCPTFRCAgent::tfrc_updateX(double t_now){
 	} 
 }
 
-/* Halve the sending rate when no feedback timer expires */
+/* Halve the sending rate when no feedback timer expires - RFC3448 4.4 Expiration of nofeedback timer*/
 void DCCPTFRCAgent::tfrc_time_no_feedback(){
 	double next_time_out = -1.0;
 	
@@ -1446,13 +1448,17 @@ int DCCPTFRCAgent::tfrc_send_packet(int datasize){
 		return 1;
 	}
 	
+	/* NO_SENT: First time to send
+	 * NO_FBACK: No feedback received yet
+	 * FBACK: Feedback has already been received
+	 */
 	switch (s_state_){
 	case TFRC_S_STATE_NO_SENT :
 		debug("%f, DCCP/TFRC(%s)::tfrc_send_packet() - DCCP asks for permission to send the first data packet\n", now(), name());
 		
 		s_t_nom_ = now();  /* set nominal send time for initial packet */
 		
-		/* init feedback timer */
+		/* init feedback timer - set to initial RTO (2 seconds) */
 		
 		s_timer_no_feedback_->sched((double) s_initial_rto_);
 
@@ -2058,7 +2064,7 @@ void DCCPTFRCAgent::tfrc_recv_updateLI(){
 }
 
 
-/* Similar to recv_packetRecv */
+/* Receiver receives a packet. Similar to recv_packetRecv */
 void DCCPTFRCAgent::tfrc_recv_packet_recv(Packet* pkt, int dataSize){
 	hdr_dccp *dccph = hdr_dccp::access(pkt);
 	//hdr_dccpack *dccpah = hdr_dccpack::access(pkt);
