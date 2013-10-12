@@ -19,3 +19,16 @@ class TfrcSctpAgent : public virtual SctpAgent {
 	public:
 		TfrcSctpAgent();
 };
+
+static class TfrcSctpClass : public TclClass {
+
+	public:
+		TfrcSctpClass() : TclClass("Agent/SCTP/TFRC") {}
+		TclObject* create(int, const char*const*) {	
+			return (new TfrcSctpAgent());
+		}
+} classSctpTfrc;
+
+TfrcSctpAgent::TfrcSctpAgent() : SctpAgent() {
+
+}
