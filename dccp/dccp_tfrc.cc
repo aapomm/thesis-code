@@ -1211,6 +1211,8 @@ void DCCPTFRCAgent::timeout(int tno){
 /* Calculate new t_ipi (inter packet interval) by
  *    t_ipi = s/X_inst; 
  * Note: No check for x=0 -> t_ipi ={0xFFF...,0xFFF}
+ * After every change in the sending rate, this macro is called
+ * to determine the next IPI.
  */
 #define CALCNEWTIPI(ccbp)                              \
         do{                                            \
@@ -2154,7 +2156,7 @@ void DCCPTFRCAgent::tfrc_recv_packet_recv(Packet* pkt, int dataSize){
 			tfrc_recv_updateLI();
 			p_prev = r_p_;
 			
-			/* Calculate loss event rate - section 5.4 */
+			/* Calculate loss event rate */
 			if(!TAILQ_EMPTY(&(r_li_hist_))){
 				r_p_ = 1/tfrc_calcImean();
 			}  
