@@ -105,6 +105,6 @@ $ns at 7.5 "$tcp_traf stop"
 $ns at 7.5 "$udp_traf stop"
 $ns at 7.5 "$sctp_traf stop"
 
-$ns at 9.5 "finish"
+$ns at 7.5 "finish"
 
 $ns run
