@@ -371,6 +371,7 @@ void TfrcAgent::recv(Packet *pkt, Handler *)
 		//  a TCP flow with 1460-byte packets.
 		fsize_ = size_;
 	}
+	/* this is where the throughput equation is used. */
 	rcvrate = p_to_b(flost, rtt_, tzero_, fsize_, bval_);
 	// rcvrate is in bytes per second, based on fairness with a    
 	// TCP connection with the same packet size size_.	      
