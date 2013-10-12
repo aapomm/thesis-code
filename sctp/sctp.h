@@ -432,18 +432,6 @@ protected:
   SctpAgent  *opAgent;
 };
 
-//SEND TIMER
-class SendTimer : public TimerHandler
-{
-public:
-  SendTimer(SctpAgent *a) 
-    : TimerHandler(), opAgent(a){}
-
-protected:
-  virtual void expire(Event *);
-  SctpAgent *opAgent;
-};
-
 /* This timer simulates the route lifetime in the routing tables of
  * reactive routing protocols for MANETs, etc. When this timer expires,
  * the route is flushed and any future data sent to this dest will cause a 
@@ -706,7 +694,6 @@ public:
   void          SackGenTimerExpiration();
   void          RouteCacheFlushTimerExpiration(SctpDest_S *);
   void          RouteCalcDelayTimerExpiration(SctpDest_S *);
-  void          SendTimerExpiration();
 
 protected:
   virtual void  delay_bind_init_all();
@@ -947,9 +934,6 @@ protected:
    */
   u_int           uiNumChunks;
   SctpTrace_S    *spSctpTrace; 
-
-  SendTimer       *opSendTimer;
-
 };
 
 #endif

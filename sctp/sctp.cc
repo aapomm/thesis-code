@@ -104,9 +104,6 @@ SctpAgent::SctpAgent() : Agent(PT_SCTP)
   opT1InitTimer = new T1InitTimer(this);
   opT1CookieTimer = new T1CookieTimer(this);
   eState = SCTP_STATE_UNINITIALIZED;
-  opSendTimer = new SendTimer(this);
-
-  // opSendTimer->sched(SEND_RATE);
 
 }
 
@@ -6035,7 +6032,6 @@ void SctpAgent::SendMuch()
 	}
       else
 	{
-    printf("ASDFASDF");
 	  break;
 	}
     // printf("new outstandingbytes: %d\n", spNewTxDest->iOutstandingBytes);
@@ -6070,6 +6066,9 @@ void SctpAgent::sendmsg(int iNumBytes, const char *cpFlags)
    */
   if(eState == SCTP_STATE_UNINITIALIZED)
     Reset();
+
+  // printf("time: %lf\n", Scheduler::instance().clock());
+  // getchar();
 
   DBG_I(sendmsg);
 
@@ -6759,13 +6758,4 @@ int SctpAgent::CalculateBytesInFlight()
     }
   
   return totalOutstanding;
-}
-
-void SctpAgent::SendTimerExpiration(){
-  printf("SENDSEND. %d\n", opSendTimer->status());
-  opSendTimer->resched(SEND_RATE);
-}
-
-void SendTimer::expire(Event *){
-  opAgent->SendTimerExpiration();
 }

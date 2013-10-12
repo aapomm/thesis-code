@@ -6,7 +6,7 @@ $ns color 2 Red
 set nf [open out.nam w]
 $ns namtrace-all $nf
 
-set nd [open TFRC.tr w]
+set nd [open RATEHYBRID.tr w]
 $ns trace-all $nd
 
 proc finish {} {
@@ -105,6 +105,8 @@ $ns at 7.5 "$tcp_traf stop"
 $ns at 7.5 "$udp_traf stop"
 $ns at 7.5 "$sctp_traf stop"
 
-$ns at 7.5 "finish"
+$ns at 20.5 "finish"
+
+puts "cbr rate: [$sctp_traf set interval_]"
 
 $ns run

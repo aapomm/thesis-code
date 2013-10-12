@@ -52,7 +52,7 @@ BEGIN {
   }
 }
 END {
-  #printf("total sctp: %d\n", total_size1);
+  #printf("total sctp: %d\n", bytes_recvd1);
   #printf("total udp: %d\n", bytes_recvd2);
   #printf("total tcp: %d\n", bytes_recvd3);
 
