@@ -33,19 +33,19 @@ set int1_n [$ns node]
 #### FOR MULTIHOMING ##################################
 set sctp0_n [$ns node]
 $sctp0_n label "SCTP0"
-set host0_if0 [$ns node]
-set host0_if1 [$ns node]
+# set host0_if0 [$ns node]
+# set host0_if1 [$ns node]
 
-$ns multihome-add-interface $sctp0_n $host0_if0
-$ns multihome-add-interface $sctp0_n $host0_if1
+# $ns multihome-add-interface $sctp0_n $host0_if0
+# $ns multihome-add-interface $sctp0_n $host0_if1
 
-$ns duplex-link $sctp0_n $host0_if0 100Mb 25ms DropTail
-$ns duplex-link $sctp0_n $host0_if1 100Mb 25ms DropTail
-$ns duplex-link $host0_if0 $int0_n 100Mb 25ms DropTail
-$ns duplex-link $host0_if1 $int0_n 100Mb 25ms DropTail
+# $ns duplex-link $sctp0_n $host0_if0 100Mb 25ms DropTail
+# $ns duplex-link $sctp0_n $host0_if1 100Mb 25ms DropTail
+# $ns duplex-link $host0_if0 $int0_n 100Mb 25ms DropTail
+# $ns duplex-link $host0_if1 $int0_n 100Mb 25ms DropTail
 ###########################################################
 
-# $ns duplex-link $sctp0_n $int0_n 100Mb 25ms DropTail
+$ns duplex-link $sctp0_n $int0_n 100Mb 25ms DropTail
 $ns duplex-link $udp0_n $int0_n 100Mb 25ms DropTail
 $ns duplex-link $tcp0_n $int0_n 100Mb 25ms DropTail
 
@@ -54,13 +54,13 @@ $ns duplex-link $udp1_n $int1_n 100Mb 25ms DropTail
 $ns duplex-link $tcp1_n $int1_n 100Mb 25ms DropTail
 
 $ns duplex-link $int0_n $int1_n 100Mb 25ms DropTail
-
 # $ns queue-limit $int0_n $int1_n 5
 # $ns duplex-link-op $int0_n $int1_n queuePos 0.5
 
 set sctp0 [new Agent/SCTP]
 $sctp0 set fid_ 1
 $ns attach-agent $sctp0_n $sctp0
+#$ns multihome-attach-agent $sctp0_n $sctp0
 
 set sctp1 [new Agent/SCTP]
 $ns attach-agent $sctp1_n $sctp1
