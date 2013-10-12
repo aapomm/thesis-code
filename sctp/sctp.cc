@@ -2678,6 +2678,7 @@ void SctpAgent::FastRtx()
 	  /* Lukasz Budzisz : 03/09/2006
 	     Section 7.2.3 of rfc4960 
 	   */
+    // [window halving]
 	  spCurrBuffData->spDest->iSsthresh 
 	    = MAX(spCurrBuffData->spDest->iCwnd/2, 4 * (int) uiMaxDataSize);
 	  spCurrBuffData->spDest->iCwnd = spCurrBuffData->spDest->iSsthresh;
@@ -6355,6 +6356,7 @@ void SctpAgent::Timeout(SctpChunkType_E eChunkType, SctpDest_S *spDest)
        */
       if(spDest->iCwnd > 1 * (int) uiMaxDataSize)
 	{
+    // [window halving]
 	  spDest->iSsthresh 
 	    = MAX(spDest->iCwnd/2, 4 * (int) uiMaxDataSize);
 	  spDest->iCwnd = 1*uiMaxDataSize;
@@ -6481,6 +6483,7 @@ void SctpAgent::CwndDegradeTimerExpiration(SctpDest_S *spDest)
       /* Lukasz Budzisz : 03/09/2006
        * Section : 7.2.1 and 7.2.2
        */
+      // [window halving]
       spDest->iCwnd = MAX(spDest->iCwnd/2, 4 * (int) uiMaxDataSize);
       tiCwnd++; // trigger changes for trace to pick up
     }
