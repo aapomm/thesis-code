@@ -14,6 +14,10 @@
 
 #include "sctp.h"
 
+#define SCTP_TFRC_STD_PACKET_SIZE 500
+#define SCTP_TFRC_INIT_SEND_RATE 
+#define SCTP_TFRC_INIT_RTO 2
+
 class TfrcSctpAgent : public virtual SctpAgent {
 
 	public:
