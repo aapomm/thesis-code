@@ -3,7 +3,7 @@
 
 #include "sctp.h"
 
-#define SEND_RATE 0.000001
+#define SEND_RATE 0.003
 
 class SctpRateHybrid;
 
@@ -11,12 +11,13 @@ class SctpRateHybrid;
 class SendTimer : public TimerHandler
 {
 public:
-  SendTimer(SctpRateHybrid *a);
+  SendTimer(SctpRateHybrid *a, List_S pktlist);
+  virtual void addToList(Packet *p);
   virtual void expire(Event *e);
 
 protected:
 	SctpRateHybrid *agent_;
-
+	List_S pktQ_;
 };
 
 class SctpRateHybrid : public SctpAgent {
@@ -25,6 +26,7 @@ private:
 	SendTimer	*timer_send;
 	double snd_rate;
 	int total;
+	List_S pktQ_;
 
 protected:
   virtual void  delay_bind_init_all();

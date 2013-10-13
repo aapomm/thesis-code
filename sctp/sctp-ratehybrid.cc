@@ -24,15 +24,23 @@ public:
   }
 } classSctpRateHybrid;
 
-SendTimer::SendTimer(SctpRateHybrid *agent) : TimerHandler(){
+SendTimer::SendTimer(SctpRateHybrid *agent, List_S pktlist) : TimerHandler(){
 	agent_ = agent;
+	pktQ_ = pktlist;
 }
 
 SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 {
 	snd_rate = SEND_RATE;
-	timer_send = new SendTimer(this);
+	memset(&pktQ_, 0, sizeof(List_S));
 
+	// printf("isHEADEMPTY? %d\n", pktQ_.spHead == NULL);
+	// printf("isTAILEMPTY? %d\n", pktQ_.spTail == NULL);
+	// printf("length? %d\n", pktQ_.uiLength);
+
+	timer_send = new SendTimer(this, pktQ_);
+
+	timer_send->sched(snd_rate);
   total = 0;
 }
 
@@ -66,7 +74,9 @@ void SctpRateHybrid::SendMuch()
 	(eDataSource == DATA_SOURCE_INFINITE || sAppLayerBuffer.uiLength != 0))
     {
     	// printf("iobytes: %d < %d\n", spNewTxDest->iOutstandingBytes, spNewTxDest->iCwnd);
-    	// printf("timer: %d\n", timer_send->status());
+    	// if(spNewTxDest->iOutstandingBytes == 65024 && spNewTxDest->iCwnd == 66060){
+    	// 	break;
+    	// }
       uiChunkSize = GetNextDataChunkSize(); 
       if(uiChunkSize <= uiPeerRwnd)
 	{
@@ -90,19 +100,8 @@ void SctpRateHybrid::SendMuch()
 
 	  memset(ucpOutData, 0, uiMaxPayloadSize); // reset
 	  iOutDataSize = BundleControlChunks(ucpOutData);
-
- 		int addDataSize = GenMultipleDataChunks(ucpOutData+iOutDataSize, 0);
-
-	  // if(askPerm()){
-		  iOutDataSize += addDataSize;
+ 		iOutDataSize += GenMultipleDataChunks(ucpOutData+iOutDataSize, 0);
 	  	SendPacket(ucpOutData, iOutDataSize, spNewTxDest);
-	  	// timer_send->resched(snd_rate);
-		// }
-		// else{
-	 //  // iOutDataSize -= addDataSize;
-	 //  spNewTxDest->iOutstandingBytes -= addDataSize;
-		// }
-	  // printf("outstandingbytes: %d\n", spNewTxDest->iOutstandingBytes);
 	}
       else if(TotalOutstanding() == 0)  // section 6.1.A
 	{
@@ -115,13 +114,11 @@ void SctpRateHybrid::SendMuch()
 	}
       else
 	{
-		// printf("ASDFASDFSADFASDF\n");
-	 //  break;
+		break;
 	}
 	// getchar();
     }
 
-    // printf("OUT!!!! %d < %d\n", spNewTxDest->iOutstandingBytes, spNewTxDest->iCwnd);
 
 
   if(iOutDataSize > 0)  // did we send anything??
@@ -164,16 +161,22 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   uiNumChunks = 0; // reset the counter
 
 // printf("time: %lf\n", Scheduler::instance().clock());
-  if(askPerm()){
+  // if(askPerm()){
+  // if(timer_send->status() == TIMER_IDLE){
+  // 	timer_send->sched(snd_rate);
+  // }
+
 	  if(dRouteCalcDelay == 0){
-	      send(opPacket, 0);
-	      timer_send->resched(snd_rate);
+	  		timer_send->addToList(opPacket);
+	      // send(opPacket, 0);
+	      // timer_send->resched(snd_rate);
 	  }
 	  else{
 	  	if(spDest->eRouteCached == TRUE){
 		  spDest->opRouteCacheFlushTimer->resched(dRouteCacheLifetime);
-		  send(opPacket, 0);
-	  	  timer_send->resched(snd_rate);
+		  timer_send->addToList(opPacket);
+		  // send(opPacket, 0);
+	  	//   timer_send->resched(snd_rate);
 		}
 	    else{
 		  spNewNode = new Node_S;
@@ -186,12 +189,12 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
 		    spDest->opRouteCalcDelayTimer->sched(dRouteCalcDelay);
 		}
 	  }
-	}
-	else{
-		Packet::free(opPacket);
-		total += 1;
-		printf("total: %d\n", total);
-	}
+	// }
+	// else{
+	// 	Packet::free(opPacket);
+	// 	total += 1;
+	// 	printf("total: %d\n", total);
+	// }
 	  // printf("send!\n");
 	  // getchar();
 }
@@ -205,6 +208,55 @@ void SctpRateHybrid::cancelTimer(){
 }
 
 void SendTimer::expire(Event*){
-	// agent_->
 	// printf("sendtimer expire!\n");
+	//DEQUEUE	
+	if(pktQ_.spHead == NULL){
+		resched(SEND_RATE);
+		// if(pktQ_.uiLength>0){
+		// 	printf("FUCK MAN! %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
+		// }
+		// printf("sendtimer expired! time: %lf\n", Scheduler::instance().clock());
+		// getchar();
+		return;
+	}
+
+	Node_S *node = pktQ_.spHead;
+
+	if(node->spNext != NULL){ 
+		pktQ_.spHead = node->spNext; 
+	} 
+	else {
+		pktQ_.spHead = NULL;
+		pktQ_.spTail = NULL;
+	}
+
+	agent_->send((Packet *)(node->vpData),0);
+	// printf("send %lf!\n", SEND_RATE);
+	resched(SEND_RATE);
+
+	// delete (Packet *) node->vpData;
+	node->vpData = NULL;
+	delete node;
+
+	pktQ_.uiLength--;
+	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
+}
+
+void SendTimer::addToList(Packet *p){
+	Node_S *spNewNode= new Node_S;
+	spNewNode->vpData = p;
+
+  if(pktQ_.spTail == NULL)
+    pktQ_.spHead = spNewNode;
+  else
+    pktQ_.spTail->spNext = spNewNode;
+
+  spNewNode->spPrev = pktQ_.spTail;
+  spNewNode->spNext = NULL;
+
+  pktQ_.spTail = spNewNode;
+
+  pktQ_.uiLength++;
+
+  // printf("add! length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
