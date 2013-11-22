@@ -205,6 +205,15 @@ struct hdr_sctp
   u_int         uiNumChunks;
   SctpTrace_S  *spSctpTrace;
 
+
+  //Added values for TFRC integration
+  double timestamp_offset;  //offset since we received data packet
+  double timestamp_echo;    //timestamp from the last data packet
+  double flost;   //frequency of loss indications
+  double rate_since_last_report;  //what it says ...
+  int losses;
+  double true_loss;
+
   u_int&        NumChunks() { return uiNumChunks; }
   SctpTrace_S*& SctpTrace() { return spSctpTrace; }
 };
@@ -934,6 +943,8 @@ protected:
    */
   u_int           uiNumChunks;
   SctpTrace_S    *spSctpTrace; 
+
+  TracedDouble true_loss_rate_; // true loss event rate,
 };
 
 #endif

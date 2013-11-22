@@ -36,12 +36,13 @@ protected:
   virtual void SendMuch();
   virtual bool askPerm();
   virtual void cancelTimer();
+  // virtual void recv(Packet *pkt, Handler*);
 
 public:
 	SctpRateHybrid();
 	~SctpRateHybrid();
 
-	// virtual void  recv(Packet *pkt, Handler*);
+	virtual void  recv(Packet *pkt, Handler*);
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);
 };
