@@ -1,5 +1,5 @@
-#ifndef sctp_rate_hybrid_h
-#define sctp_rate_hybrid_h
+#ifndef sctp_rate_hybrid_sink_h
+#define sctp_rate_hybrid_sink_h
 
 #include "sctp.h"
 
