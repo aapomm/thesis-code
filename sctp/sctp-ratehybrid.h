@@ -20,6 +20,14 @@ protected:
 	List_S pktQ_;
 };
 
+class SctpTfrcNoFeedbackTimer : public TimerHandler {
+public:
+		SctpTfrcNoFeedbackTimer(SctpRateHybrid *a) : TimerHandler() { a_ = a; }
+		virtual void expire(Event *e);
+protected:
+		SctpRateHybrid *a_;
+}; 
+
 class SctpRateHybrid : public SctpAgent {
 
 private:
