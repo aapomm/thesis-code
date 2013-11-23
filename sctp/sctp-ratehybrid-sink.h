@@ -15,6 +15,9 @@ protected:
 	List_S pktQ_;
 };
 
+
+
+
 class SctpRateHybridSink : public SctpAgent {
 
 protected:
@@ -26,7 +29,7 @@ public:
 	SctpRateHybridSink();
 	~SctpRateHybridSink();
 
-	// virtual void  recv(Packet *pkt, Handler*);
+	virtual void recv(Packet *pkt, Handler*);
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);
 };
