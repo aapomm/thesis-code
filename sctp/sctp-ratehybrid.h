@@ -114,6 +114,9 @@ protected:
 				//  sending rate > 2 * receiving rate
 	int datalimited_;	// to send immediately when a new packet
 				//   arrives after a data-limited period
+
+	int UrgentFlag;		// urgent flag
+	SctpTfrcNoFeedbackTimer NoFeedbacktimer_;
 	/* end of TFRC integration variables
 	*/
 
@@ -121,7 +124,9 @@ public:
 	SctpRateHybrid();
 	~SctpRateHybrid();
 
+	virtual void reduce_rate_on_no_feedback();
 	virtual void  recv(Packet *pkt, Handler*);
+	double rfc3390(int size);
 	virtual void  update_rtt(double tao, double now);	
   	virtual void increase_rate(double p);
   	virtual void decrease_rate();

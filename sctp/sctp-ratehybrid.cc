@@ -30,7 +30,7 @@ SendTimer::SendTimer(SctpRateHybrid *agent, List_S pktlist) : TimerHandler(){
 	pktQ_ = pktlist;
 }
 
-SctpRateHybrid::SctpRateHybrid() : SctpAgent()
+SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 {
 	snd_rate = SEND_RATE;
 	memset(&pktQ_, 0, sizeof(List_S));
@@ -50,7 +50,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 	// delta_ = 0;
 	oldrate_ = rate_;  
 	// rate_change_ = SLOW_START;
-	// UrgentFlag = 1;
+	UrgentFlag = 1;
 	rtt_=0;	 
 	sqrtrtt_=1;
 	rttcur_=1;
@@ -77,6 +77,10 @@ SctpRateHybrid::~SctpRateHybrid(){
 	cancelTimer();
 
 	delete timer_send;
+}
+
+void SctpTfrcNoFeedbackTimer::expire(Event *) {
+	a_->reduce_rate_on_no_feedback ();
 }
 
 void SctpRateHybrid::delay_bind_init_all()
@@ -543,5 +547,16 @@ double SctpRateHybrid::initial_rate(){
 
 	//default value of size_==0?
 	//so
-	return 4.0;
+	return (rfc3390(size_));
+}
+
+double SctpRateHybrid::rfc3390(int size)
+{
+        if (size <= 1095) {
+                return (4.0);
+        } else if (size < 2190) {
+                return (3.0);
+        } else {
+                return (2.0);
+        }
 }
