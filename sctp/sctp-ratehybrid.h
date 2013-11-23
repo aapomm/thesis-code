@@ -27,7 +27,6 @@ private:
 	double snd_rate;
 	int total;
 	List_S pktQ_;
-  int currTsn = 1;
 
 protected:
   virtual void  delay_bind_init_all();
