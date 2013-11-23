@@ -98,6 +98,8 @@ protected:
 	int bval_;		// value of B for the formula
 	int fsize_;		// Default size for large TCP packets 
 				//  (e.g., 1460 bytes).
+	int UrgentFlag;		// urgent flag
+	SctpTfrcNoFeedbackTimer NoFeedbacktimer_;
 	/* end of TFRC integration variables
 	*/
 

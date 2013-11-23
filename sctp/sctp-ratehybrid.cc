@@ -50,7 +50,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 	// delta_ = 0;
 	oldrate_ = rate_;  
 	// rate_change_ = SLOW_START;
-	// UrgentFlag = 1;
+	UrgentFlag = 1;
 	rtt_=0;	 
 	sqrtrtt_=1;
 	rttcur_=1;
@@ -71,6 +71,8 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 	// all_idle_ = 0;
 
 	first_pkt_rcvd = 0 ;
+
+	NoFeedbacktimer_ = new SctpTfrcNoFeedbackTimer(this);
 }
 
 SctpRateHybrid::~SctpRateHybrid(){
@@ -79,7 +81,7 @@ SctpRateHybrid::~SctpRateHybrid(){
 	delete timer_send;
 }
 
-void TfrcNoFeedbackTimer::expire(Event *) {
+void SctpTfrcNoFeedbackTimer::expire(Event *) {
 	a_->reduce_rate_on_no_feedback ();
 }
 
