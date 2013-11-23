@@ -213,6 +213,7 @@ struct hdr_sctp
   double rate_since_last_report;  //what it says ...
   int losses;
   double true_loss;
+  int uiTsn; //sequence no
 
   u_int&        NumChunks() { return uiNumChunks; }
   SctpTrace_S*& SctpTrace() { return spSctpTrace; }

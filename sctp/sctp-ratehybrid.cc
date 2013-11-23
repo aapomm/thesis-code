@@ -152,6 +152,10 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   memcpy(opPacketData->data(), ucpData, iDataSize);
   opPacket->setdata(opPacketData);
   hdr_cmn::access(opPacket)->size() = iDataSize + SCTP_HDR_SIZE+uiIpHeaderSize;
+  // set sequence number
+  hdr_sctp::access(opPacket)->uiTsn = currTsn;
+  // increase sequence number
+  currTsn++;
 
   hdr_sctp::access(opPacket)->NumChunks() = uiNumChunks;
   hdr_sctp::access(opPacket)->SctpTrace() = new SctpTrace_S[uiNumChunks];
