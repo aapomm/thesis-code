@@ -28,11 +28,12 @@ protected:
 
 class SctpTfrcNoFeedbackTimer : public TimerHandler {
 public:
-		SctpTfrcNoFeedbackTimer(SctpRateHybrid *a, SctpDest_S *d) : TimerHandler() { a_ = a; spDest = d;}
+		SctpTfrcNoFeedbackTimer(SctpRateHybrid *a) : TimerHandler() { a_ = a;}
 		virtual void expire(Event *e);
+		virtual void setDest(SctpDest_S *d);
 protected:
 		SctpRateHybrid *a_;
-		SctpDest_S spDest;
+		SctpDest_S  *spDest;
 }; 
 
 class SctpRateHybrid : public SctpAgent {

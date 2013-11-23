@@ -83,6 +83,10 @@ void SctpTfrcNoFeedbackTimer::expire(Event *) {
 	a_->reduce_rate_on_no_feedback (spDest);
 }
 
+void SctpTfrcNoFeedbackTimer::setDest(SctpDest_S *d) {
+	spDest = d;
+}
+
 void SctpRateHybrid::delay_bind_init_all()
 {
   SctpAgent::delay_bind_init_all();
