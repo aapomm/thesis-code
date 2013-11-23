@@ -5,6 +5,12 @@
 
 #define SEND_RATE 0.003
 
+/* modes of rate change for TFRC */
+#define SLOW_START 1
+#define CONG_AVOID 2
+#define RATE_DECREASE	 3
+#define OUT_OF_SLOW_START 4 
+
 class SctpRateHybrid;
 
 //SEND TIMER
@@ -61,6 +67,8 @@ protected:
   	TracedDouble true_loss_rate_; // true loss event rate,
   	int rate_change_; 	// slow start, cong avoid, decrease
 	double oldrate_;	// allows rate to be changed gradually
+	double last_change_;	// time last change in rate was made
+	double lastlimited_;	// time sender was last datalimited.
   	//End of Dynamic State
 
 	/* Responses to heavy congestion. */
@@ -98,6 +106,14 @@ protected:
 	int bval_;		// value of B for the formula
 	int fsize_;		// Default size for large TCP packets 
 				//  (e.g., 1460 bytes).
+
+	/* variants in TCP formula*/
+	int heavyrounds_;	// the number of RTTs so far when the
+				//  sending rate > 2 * receiving rate
+	int maxHeavyRounds_;	// the number of allowed rounds for
+				//  sending rate > 2 * receiving rate
+	int datalimited_;	// to send immediately when a new packet
+				//   arrives after a data-limited period
 	/* end of TFRC integration variables
 	*/
 
@@ -107,6 +123,9 @@ public:
 
 	virtual void  recv(Packet *pkt, Handler*);
 	virtual void  update_rtt(double tao, double now);	
+  	virtual void increase_rate(double p);
+  	virtual void decrease_rate();
+  	virtual double initial_rate();
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);	
 };
