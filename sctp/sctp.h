@@ -943,8 +943,6 @@ protected:
    */
   u_int           uiNumChunks;
   SctpTrace_S    *spSctpTrace; 
-
-  TracedDouble true_loss_rate_; // true loss event rate,
 };
 
 #endif
