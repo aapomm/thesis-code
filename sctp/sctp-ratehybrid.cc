@@ -30,7 +30,7 @@ SendTimer::SendTimer(SctpRateHybrid *agent, List_S pktlist) : TimerHandler(){
 	pktQ_ = pktlist;
 }
 
-SctpRateHybrid::SctpRateHybrid() : SctpAgent()
+SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 {
 	snd_rate = SEND_RATE;
 	memset(&pktQ_, 0, sizeof(List_S));
@@ -71,8 +71,6 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 	// all_idle_ = 0;
 
 	first_pkt_rcvd = 0 ;
-
-	NoFeedbacktimer_ = new SctpTfrcNoFeedbackTimer(this);
 }
 
 SctpRateHybrid::~SctpRateHybrid(){
