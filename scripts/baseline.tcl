@@ -62,7 +62,7 @@ $sctp0 set fid_ 1
 $ns attach-agent $sctp0_n $sctp0
 #$ns multihome-attach-agent $sctp0_n $sctp0
 
-set sctp1 [new Agent/SCTP/Ratehybrid]
+set sctp1 [new Agent/SCTP/RatehybridSink]
 $ns attach-agent $sctp1_n $sctp1
 
 set udp0 [new Agent/UDP]
