@@ -50,6 +50,10 @@ SctpRateHybrid::~SctpRateHybrid(){
 	delete timer_send;
 }
 
+void TfrcNoFeedbackTimer::expire(Event *) {
+	a_->reduce_rate_on_no_feedback ();
+}
+
 void SctpRateHybrid::delay_bind_init_all()
 {
   SctpAgent::delay_bind_init_all();

@@ -50,6 +50,7 @@ public:
 	SctpRateHybrid();
 	~SctpRateHybrid();
 
+	virtual void reduce_rate_on_no_feedback();
 	virtual void  recv(Packet *pkt, Handler*);
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);
