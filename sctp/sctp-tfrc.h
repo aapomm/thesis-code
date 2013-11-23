@@ -26,8 +26,8 @@ struct hdr_sctp_tfrc_fback {
 	inline static int& offset() { 
 		return offset_; 
 	}
-	inline static hdr_tfrc_ack* access(const Packet* p) {
-		return (hdr_tfrc_ack*) p->access(offset_);
+	inline static hdr_sctp_tfrc_fback* access(const Packet* p) {
+		return (hdr_sctp_tfrc_fback*) p->access(offset_);
 	}
 };
 
