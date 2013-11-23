@@ -350,3 +350,14 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
  	opInPkt = NULL;
  	delete [] ucpOutData;
 }
+
+double SctpRateHybrid::rfc3390(int size)
+{
+        if (size <= 1095) {
+                return (4.0);
+        } else if (size < 2190) {
+                return (3.0);
+        } else {
+                return (2.0);
+        }
+}

@@ -52,6 +52,7 @@ public:
 
 	virtual void reduce_rate_on_no_feedback();
 	virtual void  recv(Packet *pkt, Handler*);
+	double rfc3390(int size);
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);
 };
