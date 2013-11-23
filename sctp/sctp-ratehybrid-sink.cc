@@ -170,9 +170,8 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   delete hdr_sctp::access(opInPkt)->SctpTrace();
   hdr_sctp::access(opInPkt)->SctpTrace() = NULL;
-  printf("%d\n", hdr_cmn::access(opInPkt)->uid_);
+  printf("Sequence number: %d\n", hdr_sctp::access(opInPkt)->uiTsn);
   Packet::free(opInPkt);
   opInPkt = NULL;
-  //DBG_X(recv);
   delete [] ucpOutData;
 }

@@ -152,6 +152,10 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   memcpy(opPacketData->data(), ucpData, iDataSize);
   opPacket->setdata(opPacketData);
   hdr_cmn::access(opPacket)->size() = iDataSize + SCTP_HDR_SIZE+uiIpHeaderSize;
+  // set sequence number
+  hdr_sctp::access(opPacket)->uiTsn = currTsn;
+  // increase sequence number
+  currTsn++;
 
   hdr_sctp::access(opPacket)->NumChunks() = uiNumChunks;
   hdr_sctp::access(opPacket)->SctpTrace() = new SctpTrace_S[uiNumChunks];
@@ -259,4 +263,90 @@ void SendTimer::addToList(Packet *p){
   pktQ_.uiLength++;
 
   // printf("add! length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
+}
+
+void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
+  	if(eState == SCTP_STATE_UNINITIALIZED)
+    	Reset(); 
+
+  	hdr_ip *spIpHdr = hdr_ip::access(opInPkt);
+	PacketData *opInPacketData = (PacketData *) opInPkt->userdata();
+	u_char *ucpInData = opInPacketData->data();
+	u_char *ucpCurrInChunk = ucpInData;
+	int iRemainingDataLen = opInPacketData->size();
+
+  	u_char *ucpOutData = new u_char[uiMaxPayloadSize];
+	u_char *ucpCurrOutData = ucpOutData;
+
+ 	int iOutDataSize = 0; 
+
+	memset(ucpOutData, 0, uiMaxPayloadSize);
+ 	memset(spSctpTrace, 0,
+	 (uiMaxPayloadSize / sizeof(SctpChunkHdr_S)) * sizeof(SctpTrace_S) );
+
+ 	spReplyDest = GetReplyDestination(spIpHdr);
+
+ 	eStartOfPacket = TRUE;
+
+ 	do{
+     	iOutDataSize += ProcessChunk(ucpCurrInChunk, &ucpCurrOutData);
+     	NextChunk(&ucpCurrInChunk, &iRemainingDataLen);
+    }
+ 	while(ucpCurrInChunk != NULL);
+
+ 	if(iOutDataSize > 0) {
+    	SendPacket(ucpOutData, iOutDataSize, spReplyDest);
+    }
+
+ 	if(eSackChunkNeeded == TRUE){
+    	memset(ucpOutData, 0, uiMaxPayloadSize);
+    	iOutDataSize = BundleControlChunks(ucpOutData);
+    	if (eUseNonRenegSacks == TRUE) {
+			iOutDataSize += GenChunk(SCTP_CHUNK_NRSACK, ucpOutData+iOutDataSize);
+		}
+     	else {
+	  		iOutDataSize += GenChunk(SCTP_CHUNK_SACK, ucpOutData+iOutDataSize);
+		}
+
+     	SendPacket(ucpOutData, iOutDataSize, spReplyDest);
+
+    	if (eUseNonRenegSacks == TRUE) {
+	  		//DEBUG FUNCTION
+		}
+     	else {
+	  		//DEBUG FUNCTION
+		}
+
+     	eSackChunkNeeded = FALSE;  // reset AFTER sent (o/w breaks dependencies)
+	}
+
+	if(eForwardTsnNeeded == TRUE) {
+     	memset(ucpOutData, 0, uiMaxPayloadSize);
+     	iOutDataSize = BundleControlChunks(ucpOutData);
+     	iOutDataSize += GenChunk(SCTP_CHUNK_FORWARD_TSN,ucpOutData+iOutDataSize);
+     	SendPacket(ucpOutData, iOutDataSize, spNewTxDest);
+     	eForwardTsnNeeded = FALSE; // reset AFTER sent (o/w breaks dependencies)
+    }
+
+ 	if(eSendNewDataChunks == TRUE && eMarkedChunksPending == FALSE) {
+     	SendMuch();       // Send new data till our cwnd is full!
+     	eSendNewDataChunks = FALSE; // reset AFTER sent (o/w breaks dependencies)
+    }
+
+	double now = Scheduler::instance().clock();
+	hdr_sctp *nck = hdr_sctp::access(opInPkt);
+	//double ts = nck->timestamp_echo;
+	double ts = nck->timestamp_echo + nck->timestamp_offset;
+	double rate_since_last_report = nck->rate_since_last_report;
+	// double NumFeedback_ = nck->NumFeedback_;
+	double flost = nck->flost; 
+	int losses = nck->losses;
+	true_loss_rate_ = nck->true_loss;
+
+	//FREE PACKET
+ 	delete hdr_sctp::access(opInPkt)->SctpTrace();
+ 	hdr_sctp::access(opInPkt)->SctpTrace() = NULL;
+ 	Packet::free(opInPkt);
+ 	opInPkt = NULL;
+ 	delete [] ucpOutData;
 }

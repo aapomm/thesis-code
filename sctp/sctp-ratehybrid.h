@@ -27,6 +27,7 @@ private:
 	double snd_rate;
 	int total;
 	List_S pktQ_;
+  int currTsn = 1;
 
 protected:
   virtual void  delay_bind_init_all();
@@ -36,12 +37,13 @@ protected:
   virtual void SendMuch();
   virtual bool askPerm();
   virtual void cancelTimer();
+  // virtual void recv(Packet *pkt, Handler*);
 
 public:
 	SctpRateHybrid();
 	~SctpRateHybrid();
 
-	// virtual void  recv(Packet *pkt, Handler*);
+	virtual void  recv(Packet *pkt, Handler*);
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);
 };
