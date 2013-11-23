@@ -80,7 +80,7 @@ SctpRateHybrid::~SctpRateHybrid(){
 }
 
 void SctpTfrcNoFeedbackTimer::expire(Event *) {
-	a_->reduce_rate_on_no_feedback ();
+	a_->reduce_rate_on_no_feedback (spDest);
 }
 
 void SctpRateHybrid::delay_bind_init_all()
@@ -498,4 +498,31 @@ double SctpRateHybrid::rfc3390(int size)
         } else {
                 return (2.0);
         }
+}
+
+void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
+{
+	double now = Scheduler::instance().clock();
+	// Assumption: Datalimited and/or all_idle_
+	// and use RFC 3390
+	rtt_ = spDest->dSrtt;
+  if (rate_ > 2.0 * rfc3390(uiMaxPayloadSize) * uiMaxPayloadSize/rtt_ ) {
+          rate_*=0.5;
+  } else if ( rate_ > rfc3390(uiMaxPayloadSize) * uiMaxPayloadSize/rtt_ ) {
+          rate_ = rfc3390(uiMaxPayloadSize) * uiMaxPayloadSize/rtt_;
+  }	
+	UrgentFlag = 1;
+	round_id ++ ;
+	double t = 2*rtt_ ; 
+	// Set the nofeedback timer.
+	if (t < 2*uiMaxPayloadSize/rate_) 
+		t = 2*uiMaxPayloadSize/rate_ ; 
+	NoFeedbacktimer_.resched(t);
+	/*
+	if (datalimited_) {
+		all_idle_ = 1;
+		if (debug_) printf("Time: %5.2f Datalimited now.\n", now);
+	}
+	*/
+	nextpkt();
 }

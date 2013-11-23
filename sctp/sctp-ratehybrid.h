@@ -22,10 +22,11 @@ protected:
 
 class SctpTfrcNoFeedbackTimer : public TimerHandler {
 public:
-		SctpTfrcNoFeedbackTimer(SctpRateHybrid *a) : TimerHandler() { a_ = a; }
+		SctpTfrcNoFeedbackTimer(SctpRateHybrid *a, SctpDest_S *d) : TimerHandler() { a_ = a; spDest = d;}
 		virtual void expire(Event *e);
 protected:
 		SctpRateHybrid *a_;
+		SctpDest_S spDest;
 }; 
 
 class SctpRateHybrid : public SctpAgent {
@@ -107,7 +108,7 @@ public:
 	SctpRateHybrid();
 	~SctpRateHybrid();
 
-	virtual void reduce_rate_on_no_feedback();
+	virtual void reduce_rate_on_no_feedback(SctpDest_S *spDest);
 	virtual void  recv(Packet *pkt, Handler*);
 	double rfc3390(int size);
 	virtual void  update_rtt(double tao, double now);	
