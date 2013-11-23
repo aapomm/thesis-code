@@ -489,6 +489,67 @@ void SctpRateHybrid::update_rtt(double tao, double now){
 	rttcur_ = now - tao;
 }
 
+void SctpRateHybrid::decrease_rate (){
+
+	double now = Scheduler::instance().clock(); 
+	rate_ = rcvrate;
+	double maximumrate = (maxrate_>size_/rtt_)?maxrate_:size_/rtt_ ;
+
+	// Allow sending rate to be greater than maximumrate
+	//   (which is by default twice the receiving rate)
+	//   for at most maxHeavyRounds_ rounds.
+	if (rate_ > maximumrate)
+		heavyrounds_++;
+	else
+		heavyrounds_ = 0;
+	if (heavyrounds_ > maxHeavyRounds_) {
+		rate_ = (rate_ > maximumrate)?maximumrate:rate_ ;
+	}
+
+	rate_change_ = RATE_DECREASE;
+	last_change_ = now;
+	
+	// if (printStatus_) {
+	// 	double rate = rate_ * rtt_ / size_;
+	// 	printf("Decrease: now: %5.2f rate: %5.2f rtt: %5.2f\n", now, rate, rtt_);
+	// }
+}
+
+void SctpRateHybrid::increase_rate(double p){
+
+    double now = Scheduler::instance().clock();
+    double maximumrate;
+
+	double mult = (now-last_change_)/rtt_ ;
+	if (mult > 2) mult = 2 ;
+
+	rate_ = rate_ + (size_/rtt_)*mult ;
+	if (datalimited_ || lastlimited_ > now - 1.5*rtt_) {
+		// Modified by Sally on 3/10/2006
+		// If the sender has been datalimited, rate should be
+		//   at least the initial rate, when increasing rate.
+		double init_rate = initial_rate()*size_/rtt_;
+	   	maximumrate = (maxrate_>init_rate)?maxrate_:init_rate ;
+        } else {
+	   	maximumrate = (maxrate_>size_/rtt_)?maxrate_:size_/rtt_ ;
+	}
+	maximumrate = (maximumrate>rcvrate)?rcvrate:maximumrate;
+	rate_ = (rate_ > maximumrate)?maximumrate:rate_ ;
+	
+    rate_change_ = CONG_AVOID;  
+    last_change_ = now;
+	heavyrounds_ = 0;
+}
+
+double SctpRateHybrid::initial_rate(){
+	//defualt value of rate_init_option is 2
+	//so, return(rfc3390(size_))
+
+	//default value of size_==0?
+	//so
+	return (rfc3390(size_));
+}
+
 double SctpRateHybrid::rfc3390(int size)
 {
         if (size <= 1095) {
