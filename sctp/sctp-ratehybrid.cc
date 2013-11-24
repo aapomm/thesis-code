@@ -190,9 +190,10 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   opPacket->setdata(opPacketData);
   hdr_cmn::access(opPacket)->size() = iDataSize + SCTP_HDR_SIZE+uiIpHeaderSize;
 
-  hdr_sctp::access(opPacket)->NumChunks() = uiNumChunks;
-  hdr_sctp::access(opPacket)->SctpTrace() = new SctpTrace_S[uiNumChunks];
-  memcpy(hdr_sctp::access(opPacket)->SctpTrace(), spSctpTrace, 
+  hdr_sctp *sctph = hdr_sctp::access(opPacket);
+  sctph->NumChunks() = uiNumChunks;
+  sctph->SctpTrace() = new SctpTrace_S[uiNumChunks];
+  memcpy(sctph->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
   uiNumChunks = 0; // reset the counter
