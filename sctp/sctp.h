@@ -207,10 +207,10 @@ struct hdr_sctp
 
 
   //Added values for TFRC integration
-  double timestamp_offset;  //offset since we received data packet
-  double timestamp_echo;    //timestamp from the last data packet
-  double flost;   //frequency of loss indications
-  double rate_since_last_report;  //what it says ...
+  double timestamp_offset;  //offset since we received data packet (t_delay)
+  double timestamp_echo;    //timestamp from the last data packet (t_recvdata)
+  double flost;   //frequency of loss indications (p)
+  double rate_since_last_report;  //what it says ... (X_recv)
   int losses;
   double true_loss;
 
