@@ -429,8 +429,8 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	/* then come out of slow start */
 	if (first_pkt_rcvd == 0) {
 		first_pkt_rcvd = 1 ; 
-		slowstart();
-		nextpkt();
+		//slowstart();
+		//nextpkt();
 	}
 	else {
 		if (rate_change_ == SLOW_START) {
@@ -439,8 +439,8 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 				oldrate_ = rate_ = rcvrate;
 			}
 			else {
-				slowstart();
-				nextpkt();
+				//slowstart();
+				//nextpkt();
 			}
 		}
 		else {
@@ -590,5 +590,5 @@ void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
 		if (debug_) printf("Time: %5.2f Datalimited now.\n", now);
 	}
 	*/
-	nextpkt();
+	//nextpkt();
 }
