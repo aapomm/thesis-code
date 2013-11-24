@@ -206,7 +206,7 @@ struct hdr_sctp
   SctpTrace_S  *spSctpTrace;
 
 
-  //Added values for TFRC integration
+  //Added values for TFRC integration (these are values needed by the sender)
   double timestamp_offset;  //offset since we received data packet (t_delay)
   double timestamp_echo;    //timestamp from the last data packet (t_recvdata)
   double flost;   //frequency of loss indications (p)
@@ -214,6 +214,28 @@ struct hdr_sctp
   int losses;
   double true_loss;
 
+  // Values needed by the receiver
+
+  // RFC 3448 specifies that the data packet include the sequence
+  // number, timestamp, and RTT estimate.
+  int seqno;    //data sequence number
+  double timestamp;   //time this message was sent
+  double rtt;   //RTT estimate of sender
+  // "rate" is used by one of the experimental algorithms, RBPH.
+  double rate;    //sender's current rate
+  // In a real implementation, tzero, psize, and fsize
+  // would not be in the packet header.
+  // They are here for convenience.
+  double tzero;   //RTO in Umass eqn
+  int psize;    //Packet size.
+  int fsize;    //The default large packet size for VoIP.  
+  // UrgentFlag is used to request that a loss report be sent
+  //  immediately.
+  int UrgentFlag;   //Urgent Flag
+  // "round_id" is used by PreciseLoss_, a variant for more
+  //  precise loss events that is on by default.
+  int round_id ;    //round id.
+  
   u_int&        NumChunks() { return uiNumChunks; }
   SctpTrace_S*& SctpTrace() { return spSctpTrace; }
 };
