@@ -301,7 +301,67 @@ double SctpRateHybridSink::b_to_p(double b, double rtt, double tzero, int psize,
 	}
 }
 
-int SctpRateHybridSink::command(int argc, const char*const* argv){
+int SctpRateHybridSink::command(int argc, const char*const* argv) 
+{
+	if (argc == 3) {
+		if (strcmp(argv[1], "weights") == 0) {
+			/* 
+			 * weights is a string of numbers, seperated by + signs
+			 * the firs number is the total number of weights.
+			 * the rest of them are the actual weights
+			 * this overrides the defaults
+			 */
+			char *w ;
+			w = (char *)calloc(strlen(argv[2])+1, sizeof(char)) ;
+			if (w == NULL) {
+				printf ("error allocating w\n");
+				abort();
+			}
+			strcpy(w, (char *)argv[2]);
+			numsamples = atoi(strtok(w,"+"));
+			sample = (int *)malloc((numsamples+1)*sizeof(int));
+			losses = (int *)malloc((numsamples+1)*sizeof(int));
+                        count_losses = (int *)malloc((numsamples+1)*sizeof(int));
+                        num_rtts = (int *)malloc((numsamples+1)*sizeof(int));
+			weights = (double *)malloc((numsamples+1)*sizeof(double));
+			mult = (double *)malloc((numsamples+1)*sizeof(double));
+			fflush(stdout);
+			if (sample && weights) {
+				int count = 0 ;
+				while (count < numsamples) {
+					sample[count] = 0;
+					losses[count] = 1;
+					count_losses[count] = 0;
+                                        num_rtts[count] = 0;
+					mult[count] = 1;
+					char *w;
+					w = strtok(NULL, "+");
+					if (w == NULL)
+						break ; 
+					else {
+						weights[count++] = atof(w);
+					}	
+				}
+				if (count < numsamples) {
+					printf ("error in weights string %s\n", argv[2]);
+					abort();
+				}
+				sample[count] = 0;
+				losses[count] = 1;
+				count_losses[count] = 0;
+				num_rtts[count] = 0;
+				weights[count] = 0;
+				mult[count] = 1;
+				free(w);
+				return (TCL_OK);
+			}
+			else {
+				printf ("error allocating memory for smaple and weights:2\n");
+				abort();
+			}
+		}
+	}
+	return (Agent::command(argc, argv));
 }
 
 /*
