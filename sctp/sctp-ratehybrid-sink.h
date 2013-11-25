@@ -70,7 +70,7 @@ protected:
 	void print_num_rtts_all(int *num_rtts);
 	int new_loss(int i, double tstamp);
 	double estimate_tstamp(int before, int after, int i);
-	virtual void  processTFRCResponse(Packet *pkt, Handler*);
+	virtual void  processTFRCResponse(Packet *pkt);
 	
 	// algo specific
 	double est_loss_WALI();

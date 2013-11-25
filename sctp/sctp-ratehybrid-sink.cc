@@ -221,12 +221,13 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   delete hdr_sctp::access(opInPkt)->SctpTrace();
   hdr_sctp::access(opInPkt)->SctpTrace() = NULL;
+  processTFRCResponse(opInPkt);
   Packet::free(opInPkt);
   opInPkt = NULL;
   delete [] ucpOutData;
 }
 
-void SctpRateHybridSink::processTFRCResponse(Packet *pkt, Handler *)
+void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 {
   hdr_sctp* tfrch = hdr_sctp::access(pkt);
 	hdr_flags* hf = hdr_flags::access(pkt);
@@ -365,7 +366,6 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt, Handler *)
 	if (UrgentFlag || ecnEvent || congestionEvent) {
 		nextpkt(p);
 	}
-	Packet::free(pkt);
 }
 
 /*
