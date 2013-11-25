@@ -63,7 +63,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
  	//test initialization
 	// seqno_=0;				
  	// rate_ = InitRate_;
- 	rate_ = 1.0;
+ 	rate_ = 300.0;
 	// delta_ = 0;
 	oldrate_ = rate_;  
 	// rate_change_ = SLOW_START;
@@ -88,6 +88,8 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	// all_idle_ = 0;
 
 	first_pkt_rcvd = 0 ;
+
+	printf("RATEHYBRID.\n");
 }
 
 SctpRateHybrid::~SctpRateHybrid(){
@@ -276,7 +278,8 @@ void SendTimer::expire(Event*){
 	// printf("sendtimer expire!\n");
 	//DEQUEUE	
 	if(pktQ_.spHead == NULL){
-		resched(agent_->rate_);
+		printf("%d %lf\n", agent_->size_, agent_->rate_);
+		resched(agent_->size_/agent_->rate_);
 		// if(pktQ_.uiLength>0){
 		// 	printf("FUCK MAN! %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 		// }
@@ -297,7 +300,8 @@ void SendTimer::expire(Event*){
 
 	agent_->send((Packet *)(node->vpData),0);
 	// printf("send %lf!\n", SEND_RATE);
-	resched(agent_->rate_);
+	printf("%lf\n", agent_->rate_); 	
+	resched(agent_->uiMaxPayloadSize/agent_->rate_);
 
 	// delete (Packet *) node->vpData;
 	node->vpData = NULL;
