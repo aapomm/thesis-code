@@ -599,7 +599,7 @@ void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
 	double now = Scheduler::instance().clock();
 	// Assumption: Datalimited and/or all_idle_
 	// and use RFC 3390
-	rtt_ = spDest->dSrtt;
+	//rtt_ = spDest->dSrtt;
   if (rate_ > 2.0 * rfc3390(uiMaxPayloadSize) * uiMaxPayloadSize/rtt_ ) {
           rate_*=0.5;
   } else if ( rate_ > rfc3390(uiMaxPayloadSize) * uiMaxPayloadSize/rtt_ ) {
