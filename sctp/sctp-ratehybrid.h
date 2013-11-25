@@ -3,7 +3,7 @@
 
 #include "sctp.h"
 
-#define SEND_RATE 0.003
+#define SEND_RATE 0.001
 
 /* modes of rate change for TFRC */
 #define SLOW_START 1
@@ -59,7 +59,7 @@ protected:
 	*/
 	// Dynamic State
   	int first_pkt_rcvd ;	// first ack received yet?
-  	double rate_;
+  	
 	double rcvrate  ; 	// TCP friendly rate based on current RTT 
 				//  and recever-provded loss estimate
 	double maxrate_;	// prevents sending at more than 2 times the 
@@ -136,6 +136,7 @@ public:
   	virtual double initial_rate();
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);	
+  	double rate_;
 };
 
 #endif
