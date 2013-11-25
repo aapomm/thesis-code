@@ -1590,3 +1590,99 @@ Agent/PBC set modulationScheme 0
 
 Agent/MDART set macFailed_ true
 Agent/MDART set etxMetric_ true
+
+# SCTP RateHybrid
+
+# Dynamic state:
+Agent/SctpRateHybrid set rate_ 0 
+Agent/SctpRateHybrid set ndatapack_ 0 ;	# Number of packets sent
+Agent/SctpRateHybrid set ndatabytes_ 0 ;	# Number of bytes sent
+Agent/SctpRateHybrid set true_loss_rate_ 0.0 ; # For statistics only.
+# RTT:
+Agent/SctpRateHybrid set srtt_init_ 0 ;	# Variables for tracking RTT	
+Agent/SctpRateHybrid set rttvar_init_ 12  
+Agent/SctpRateHybrid set rtxcur_init_ 6.0	
+Agent/SctpRateHybrid set rttvar_exp_ 2	
+Agent/SctpRateHybrid set T_SRTT_BITS 3	
+Agent/SctpRateHybrid set T_RTTVAR_BITS 2	
+# VoIP mode:
+Agent/SctpRateHybrid set voip_ 0 ;        # Added on 10/23/2004      
+				# 1 for voip mode.
+Agent/SctpRateHybrid set voip_max_pkt_rate_ 100 ;  # Max rate in pps, for voip mode.
+Agent/SctpRateHybrid set fsize_ 1460 ;	# Default size for large TCP packets. 
+				# Used for VoIP mode.
+Agent/SctpRateHybrid set headersize_ 32 ; # Size for packet headers.
+# End of VoIP mode.
+# Variants in the SctpRateHybrid algorithms:
+# Agent/SctpRateHybrid set standard_ 0 ;	# Added on 4/19/2007
+				# Set to 1 for RFC 3448 algorithms.
+				# Set to 2 for RFC 4342 algorithms.
+				# Set to 3 for RFC 3448bis algorithms.
+Agent/SctpRateHybrid set rate_init_option_ 2 ;	# Added on 10/20/2004
+				# Set to 1 for backward compatibility. 
+				# Set to 2 for RFC 3390 initial rates
+				# Default changed on 10/21/2004.
+Agent/SctpRateHybrid set slow_increase_ 1 ;	# Added on 10/20//2004
+				# Set to 1 for gradual rate changes.  
+				# This also gives backward compatibility.
+# Agent/SctpRateHybrid set ss_changes_ 1 ;	# Deleted on 3/14//2006. 
+Agent/SctpRateHybrid set maxHeavyRounds_ 0; # Number of rounds for sending rate allowed
+				  #  to be greater than twice receiving rate.
+				  # Default changed on 3/27/2007, to conform
+				  # to RFC3448 and CCID 3.
+Agent/SctpRateHybrid set conservative_ 0 ;  # Set to true for a conservative 
+				  # response to heavy congestion.
+Agent/SctpRateHybrid set scmult_ 1.5 ;	# self clocking parameter for conservative_
+Agent/SctpRateHybrid set oldCode_ false ; # Set to 1 to use old code for datalimited
+				#   applications.
+				# Parameter added on 12/18/02.
+# End of Variands.
+# Parameters:
+Agent/SctpRateHybrid set packetSize_ 1000 
+Agent/SctpRateHybrid set df_ 0.95 ;	# decay factor for accurate RTT estimate
+Agent/SctpRateHybrid set tcp_tick_ 0.1 ;	
+Agent/SctpRateHybrid set InitRate_ 300 ;	# Initial send rate	
+Agent/SctpRateHybrid set overhead_ 0 ;	# If > 0, dither outgoing packets
+Agent/SctpRateHybrid set ssmult_ 2 ; 	# Rate of increase during slow-start:
+Agent/SctpRateHybrid set bval_ 1 ;	# Value of B for TCP formula
+Agent/SctpRateHybrid set ca_ 1 ; 	 	# Enable Sqrt(RTT) congestion avoidance
+Agent/SctpRateHybrid set printStatus_ 0 
+Agent/SctpRateHybrid set ecn_ 0 ;		# Set to 1 for ECN-capable connection.
+Agent/SctpRateHybrid set minrto_ 0.0 ;	# Minimum RTO, for use in TCP equation.
+				# The default is not to use minrto_.
+Agent/SctpRateHybrid set SndrType_ 0 ;    # Set to 1 to use data-producing applications
+                                #   such as FTP.
+Agent/SctpRateHybrid set maxqueue_ MAXSEQ ;  # queue from application.
+Agent/SctpRateHybrid set rate_init_ 2 ;		# Added on 10/20/2004
+				# Set to 1 for backward compatibility. 
+				# Default changed on 10/21/2004.
+Agent/SctpRateHybrid set useHeaders_ true ;	# Added on 2005/06/24. 
+Agent/SctpRateHybrid set idleFix_ true ;	# Added on 2006/03/12.
+
+
+Agent/SctpRateHybrid set packetSize_ 40
+Agent/SctpRateHybrid set InitHistorySize_ 100000
+Agent/SctpRateHybrid set NumFeedback_ 1 
+Agent/SctpRateHybrid set AdjustHistoryAfterSS_ 1
+Agent/SctpRateHybrid set NumSamples_ -1
+Agent/SctpRateHybrid set discount_ 1;	# History Discounting
+Agent/SctpRateHybrid set minDiscountRatio_ 0.5; # Minimum for history discounting.
+Agent/SctpRateHybrid set printLoss_ 0
+Agent/SctpRateHybrid set smooth_ 1 ;	# smoother Average Loss Interval
+Agent/SctpRateHybrid set ShortIntervals_ 0 ; #  For calculating loss event rates 
+                        	# for short loss intervals differently
+Agent/SctpRateHybrid set ShortRtts_ 2 ; # Max num of RTTs in a short interval.
+Agent/SctpRateHybrid set minlc_ 4
+Agent/SctpRateHybrid set algo_ 1 ;  	# 1: algo from sigcomm paper 2: ewma 
+				# 3: fixed window
+Agent/SctpRateHybrid set maxint_ 1000 ;     # max loss interval history 
+Agent/SctpRateHybrid set history_ 0.75 ;    # loss history for EWMA
+Agent/SctpRateHybrid set PreciseLoss_ 1 ;   # 1 for more precise loss events
+				      # Introduced on 12/11/02, default 1.
+				      # No change in performance.
+Agent/SctpRateHybrid set numPkts_ 1;	# Num non-sequential packets before loss
+				# Introduced on 12/12/02, with default 1.
+				# Default changed to 3 on 12/16/02.
+				# Default changed to 1 on 10/28/03 due
+				#    to a major bug.
+Agent/SctpRateHybrid set bytes_ 0 ;	# For counting bytes received.

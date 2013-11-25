@@ -32,8 +32,24 @@ SendTimer::SendTimer(SctpRateHybrid *agent, List_S pktlist) : TimerHandler(){
 
 SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 {
-	snd_rate = SEND_RATE;
-	memset(&pktQ_, 0, sizeof(List_S));
+	bind("packetSize_", &size_);
+	bind("rate_", &rate_);
+	bind("df_", &df_);
+	bind("tcp_tick_", &tcp_tick_);
+	bind("true_loss_rate_", &true_loss_rate_);
+	bind("srtt_init_", &srtt_init_);
+	bind("rttvar_init_", &rttvar_init_);
+	bind("rtxcur_init_", &rtxcur_init_);
+	bind("rttvar_exp_", &rttvar_exp_);
+	bind("T_SRTT_BITS", &T_SRTT_BITS);
+	bind("T_RTTVAR_BITS", &T_RTTVAR_BITS);
+	bind("bval_", &bval_);
+	bind_bool("conservative_", &conservative_);
+	bind("minrto_", &minrto_);
+	bind("maxHeavyRounds_", &maxHeavyRounds_);
+	bind("scmult_", &scmult_);
+//	bind("standard_", &standard_);
+	bind("fsize_", &fsize_);
 
 	// printf("isHEADEMPTY? %d\n", pktQ_.spHead == NULL);
 	// printf("isTAILEMPTY? %d\n", pktQ_.spTail == NULL);
