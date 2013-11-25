@@ -410,7 +410,7 @@ void SctpRateHybridSink::sendpkt(double p)
 		tfrc_ackh->timestamp_echo=last_timestamp_;
 		tfrc_ackh->timestamp_offset=now-last_arrival_;
 		tfrc_ackh->timestamp=now;
-		//tfrc_ackh->NumFeedback_ = NumFeedback_;
+		tfrc_ackh->NumFeedback_ = NumFeedback_;
 		if (p < 0) 
 			tfrc_ackh->flost = est_loss (); 
 		else

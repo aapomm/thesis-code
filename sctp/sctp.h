@@ -212,6 +212,7 @@ struct hdr_sctp
   double flost;   //frequency of loss indications (p)
   double rate_since_last_report;  //what it says ... (X_recv)
   int losses;
+  double NumFeedback_;
   double true_loss;
 
   // Values needed by the receiver
