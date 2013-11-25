@@ -503,10 +503,92 @@ double SctpRateHybridSink::b_to_p(double b, double rtt, double tzero, int psize,
 	}
 }
 
-int SctpRateHybridSink::command(int argc, const char*const* argv) 
+int SctpRateHybridSink::command(int argc, const char*const* argv)
 {
-	if (argc == 3) {
-		if (strcmp(argv[1], "weights") == 0) {
+  double dCurrTime = Scheduler::instance().clock();
+
+  Tcl& oTcl = Tcl::instance();
+  Node *opNode = NULL;
+  int iNsAddr;
+  int iNsPort;
+  NsObject *opTarget = NULL;
+  NsObject *opLink = NULL;
+  int iRetVal;
+
+  if(argc == 2)   
+    {
+      if (strcmp(argv[1], "reset") == 0) 
+	{
+	  Reset();
+	  return (TCL_OK);
+	}
+      else if (strcmp(argv[1], "close") == 0) 
+	{
+	  Close();
+	  return (TCL_OK);
+	}
+    }
+  else if(argc == 3) 
+    {
+      if (strcmp(argv[1], "advance") == 0) 
+	{
+	  return (TCL_OK);
+	}
+      else if (strcmp(argv[1], "set-multihome-core") == 0) 
+	{ 
+	  opCoreTarget = (Classifier *) TclObject::lookup(argv[2]);
+	  if(opCoreTarget == NULL) 
+	    {
+	      oTcl.resultf("no such object %s", argv[4]);
+	      return (TCL_ERROR);
+	    }
+	  return (TCL_OK);
+	}
+      else if (strcmp(argv[1], "set-primary-destination") == 0)
+	{
+	  opNode = (Node *) TclObject::lookup(argv[2]);
+	  if(opNode == NULL) 
+	    {
+	      oTcl.resultf("no such object %s", argv[2]);
+	      return (TCL_ERROR);
+	    }
+	  iRetVal = SetPrimary( opNode->address() );
+
+	  if(iRetVal == TCL_ERROR)
+	    {
+	      fprintf(stderr, "[SctpAgent::command] ERROR:"
+		      "%s is not a valid destination\n", argv[2]);
+	      return (TCL_ERROR);
+	    }
+	  return (TCL_OK);
+	}
+      else if (strcmp(argv[1], "force-source") == 0)
+	{
+	  opNode = (Node *) TclObject::lookup(argv[2]);
+	  if(opNode == NULL) 
+	    {
+	      oTcl.resultf("no such object %s", argv[2]);
+	      return (TCL_ERROR);
+	    }
+	  iRetVal = ForceSource( opNode->address() );
+
+	  if(iRetVal == TCL_ERROR)
+	    {
+	      fprintf(stderr, "[SctpAgent::command] ERROR:"
+		      "%s is not a valid source\n", argv[2]);
+	      return (TCL_ERROR);
+	    }
+	  return (TCL_OK);
+	}
+      else if (strcmp(argv[1], "print") == 0) 
+	{
+	  if(eTraceAll == TRUE)
+	    TraceAll();
+	  else 
+	    TraceVar(argv[2]);
+	  return (TCL_OK);
+	}
+	else if (strcmp(argv[1], "weights") == 0) {
 			/* 
 			 * weights is a string of numbers, seperated by + signs
 			 * the firs number is the total number of weights.
@@ -562,8 +644,58 @@ int SctpRateHybridSink::command(int argc, const char*const* argv)
 				abort();
 			}
 		}
+    }
+  else if(argc == 4)
+    {
+      if (strcmp(argv[1], "add-multihome-destination") == 0) 
+	{ 
+	  iNsAddr = atoi(argv[2]);
+	  iNsPort = atoi(argv[3]);
+	  AddDestination(iNsAddr, iNsPort);
+	  return (TCL_OK);
 	}
-	return (Agent::command(argc, argv));
+      else if (strcmp(argv[1], "set-destination-lossrate") == 0)
+	{
+	  opNode = (Node *) TclObject::lookup(argv[2]);
+	  if(opNode == NULL) 
+	    {
+	      oTcl.resultf("no such object %s", argv[2]);
+	      return (TCL_ERROR);
+	    }
+	  iRetVal = SetLossrate( opNode->address(), atof(argv[3]) );
+
+	  if(iRetVal == TCL_ERROR)
+	    {
+	      fprintf(stderr, "[SctpAgent::command] ERROR:"
+		      "%s is not a valid destination\n", argv[2]);
+	      return (TCL_ERROR);
+	    }
+	  return (TCL_OK);
+	}
+    }
+  else if(argc == 6)
+    {
+      if (strcmp(argv[1], "add-multihome-interface") == 0) 
+	{ 
+	  iNsAddr = atoi(argv[2]);
+	  iNsPort = atoi(argv[3]);
+	  opTarget = (NsObject *) TclObject::lookup(argv[4]);
+	  if(opTarget == NULL) 
+	    {
+	      oTcl.resultf("no such object %s", argv[4]);
+	      return (TCL_ERROR);
+	    }
+	  opLink = (NsObject *) TclObject::lookup(argv[5]);
+	  if(opLink == NULL) 
+	    {
+	      oTcl.resultf("no such object %s", argv[5]);
+	      return (TCL_ERROR);
+	    }
+	  AddInterface(iNsAddr, iNsPort, opTarget, opLink);
+	  return (TCL_OK);
+	}
+    }
+  return (Agent::command(argc, argv));
 }
 
 /*
