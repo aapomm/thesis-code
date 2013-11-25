@@ -133,6 +133,8 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   eStartOfPacket = TRUE;
 
+  // compute TFRC response
+  processTFRCResponse(opInPkt);
   do
     {
       //DBG_PL(recv, "iRemainingDataLen=%d"), iRemainingDataLen DBG_PR;
@@ -221,7 +223,6 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   delete hdr_sctp::access(opInPkt)->SctpTrace();
   hdr_sctp::access(opInPkt)->SctpTrace() = NULL;
-  processTFRCResponse(opInPkt);
   Packet::free(opInPkt);
   opInPkt = NULL;
   delete [] ucpOutData;
@@ -364,27 +365,27 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 		}
 	}
 	if (UrgentFlag || ecnEvent || congestionEvent) {
-		nextpkt(p);
+    sendReport = true;
 	}
 }
 
 /*
  * Schedule sending this report, and set timer for the next one.
  */
-void SctpRateHybridSink::nextpkt(double p) {
+//void SctpRateHybridSink::nextpkt(Packet* pkt, double p) {
 
-	sendpkt(p);
+//	sendpkt(pkt, p);
 
 	/* schedule next report rtt/NumFeedback_ later */
 	/* note from Sally: why is this 1.5 instead of 1.0? */
-	if (rtt_ > 0.0 && NumFeedback_ > 0) 
-		nack_timer_.resched(1.5*rtt_/NumFeedback_);
-}
+	// if (rtt_ > 0.0 && NumFeedback_ > 0) 
+	//	nack_timer_.resched(1.5*rtt_/NumFeedback_);
+//}
 
 /*
  * Create report message, and send it.
  */
-void SctpRateHybridSink::sendpkt(double p)
+Packet* SctpRateHybridSink::addTFRCHeaders(Packet* pkt, double p)
 {
 	double now = Scheduler::instance().clock();
 
@@ -398,7 +399,6 @@ void SctpRateHybridSink::sendpkt(double p)
 
 	if (last_arrival_ >= last_report_sent) {
 
-		Packet* pkt = allocpkt();
 		if (pkt == NULL) {
 			printf ("error allocating packet\n");
 			abort(); 
@@ -425,7 +425,7 @@ void SctpRateHybridSink::sendpkt(double p)
 		last_report_sent = now; 
 		rcvd_since_last_report = 0;
 		losses_since_last_report = 0;
-		send(pkt, 0);
+    return pkt;
 	}
 }
 /*
@@ -696,6 +696,65 @@ int SctpRateHybridSink::command(int argc, const char*const* argv)
 	}
     }
   return (Agent::command(argc, argv));
+}
+
+void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest)
+{
+  Node_S *spNewNode = NULL;
+  Packet *opPacket = NULL;
+  PacketData *opPacketData = NULL;
+
+  SetSource(spDest); // set src addr, port, target based on "routing table"
+  SetDestination(spDest); // set dest addr & port 
+
+  opPacket = allocpkt();
+  opPacketData = new PacketData(iDataSize);
+  memcpy(opPacketData->data(), ucpData, iDataSize);
+  opPacket->setdata(opPacketData);
+  hdr_cmn::access(opPacket)->size() = iDataSize + SCTP_HDR_SIZE+uiIpHeaderSize;
+
+  hdr_sctp::access(opPacket)->NumChunks() = uiNumChunks;
+  hdr_sctp::access(opPacket)->SctpTrace() = new SctpTrace_S[uiNumChunks];
+  memcpy(hdr_sctp::access(opPacket)->SctpTrace(), spSctpTrace, 
+	 (uiNumChunks * sizeof(SctpTrace_S)) );
+
+  uiNumChunks = 0; // reset the counter
+
+  if (sendReport == true)
+  { 
+    opPacket = addTFRCHeaders(opPacket, p);
+    sendReport = false;
+  }
+
+  if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
+    {
+      send(opPacket, 0); // no... so send immediately
+    }
+  else
+    {
+      if(spDest->eRouteCached == TRUE)  
+	{
+	  /* Since the route is "cached" already, we can reschedule the route
+	   * flushing and send the packet immediately.
+	   */
+	  spDest->opRouteCacheFlushTimer->resched(dRouteCacheLifetime);
+	  send(opPacket, 0);
+	}
+      else
+	{
+	  /* The route isn't cached, so queue the packet and "calculate" the 
+	   * route.
+	   */
+	  spNewNode = new Node_S;
+	  spNewNode->eType = NODE_TYPE_PACKET_BUFFER;
+	  spNewNode->vpData = opPacket;
+	  InsertNode(&spDest->sBufferedPackets,spDest->sBufferedPackets.spTail,
+		     spNewNode, NULL);
+
+	  if(spDest->opRouteCalcDelayTimer->status() != TIMER_PENDING)
+	    spDest->opRouteCalcDelayTimer->sched(dRouteCalcDelay);
+	}
+    }
 }
 
 /*

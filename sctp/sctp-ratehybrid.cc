@@ -447,6 +447,7 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	rcvrate = p_to_b(flost, rtt_, tzero_, fsize_, bval_);
 	/* if we get no more feedback for some time, cut rate in half */
 	double t = 2*rtt_ ; 
+  if(rate_ == 0.00) rate_ = 1.00;
 	if (t < 2*size_/rate_) 
 		t = 2*size_/rate_ ; 
 	NoFeedbacktimer_.resched(t);
@@ -479,9 +480,9 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	bool printStatus_ = true;
 	if (printStatus_) {
 		printf("time: %5.2f rate: %5.2f\n", now, rate_);
-		double packetrate = rate_ * rtt_ / size_;
+		double packetrate = rate_ * rtt_ / uiMaxPayloadSize;
 		printf("time: %5.2f packetrate: %5.2f\n", now, packetrate);
-		double maxrate = maxrate_ * rtt_ / size_;
+		double maxrate = maxrate_ * rtt_ / uiMaxPayloadSize;
 		printf("time: %5.2f maxrate: %5.2f\n", now, maxrate);
 	}
 }

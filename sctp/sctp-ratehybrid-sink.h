@@ -1,10 +1,7 @@
 #ifndef sctp_rate_hybrid_sink_h
 #define sctp_rate_hybrid_sink_h
 
-#include "sctp.h"
-#include "agent.h"
-#include "packet.h"
-#include "ip.h"
+#include "sctp.h" #include "agent.h" #include "packet.h" #include "ip.h"
 #include "timer-handler.h"
 #include "random.h"
 
@@ -57,8 +54,6 @@ protected:
   virtual void  delay_bind_init_all();
   virtual int   delay_bind_dispatch(const char *varName, const char *localName,
 				    TclObject *tracer);
-	void sendpkt(double);
-	void nextpkt(double);
 	double adjust_history(double);
 	double est_loss();
 	double est_thput(); 
@@ -71,6 +66,8 @@ protected:
 	int new_loss(int i, double tstamp);
 	double estimate_tstamp(int before, int after, int i);
 	virtual void  processTFRCResponse(Packet *pkt);
+  Packet* addTFRCHeaders(Packet*, double);
+  void SendPacket(u_char*, int, SctpDest_S*);
 	
 	// algo specific
 	double est_loss_WALI();
@@ -89,6 +86,8 @@ protected:
 	//common variables
 
 	TfrcNackTimer nack_timer_;
+
+  bool sendReport = false; // send report????
 
 	int psize_;		// size of received packet
 	int fsize_;		// size of large TCP packet, for VoIP mode.
@@ -160,6 +159,8 @@ protected:
 	int discount ;		// emphasize most recent loss interval
 				//  when it is very large
 	int bytes_ ;		// For reporting on received bytes.
+
+  double p;
 
 public:
 	SctpRateHybridSink();
