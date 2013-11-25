@@ -72,6 +72,7 @@ protected:
 	double last_change_;	// time last change in rate was made
 	double lastlimited_;	// time sender was last datalimited.
   	//End of Dynamic State
+  int seqno_;
 
 	/* Responses to heavy congestion. */
 	int conservative_;	// set to 1 for an experimental, conservative 

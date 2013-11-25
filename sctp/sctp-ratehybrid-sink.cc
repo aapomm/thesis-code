@@ -226,6 +226,208 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
   delete [] ucpOutData;
 }
 
+void SctpRateHybridSink::processTFRCResponse(Packet *pkt, Handler *)
+{
+  hdr_sctp* tfrch = hdr_sctp::access(pkt);
+	hdr_flags* hf = hdr_flags::access(pkt);
+	double now = Scheduler::instance().clock();
+	double p = -1;
+	int ecnEvent = 0;
+	int congestionEvent = 0;
+	int UrgentFlag = 0;	// send loss report immediately
+
+	if (algo == WALI && !init_WALI_flag) {
+		init_WALI () ;
+	}
+	rcvd_since_last_report ++;
+	total_received_ ++;
+	// bytes_ was added by Tom Phelan, for reporting bytes received.
+	bytes_ += hdr_cmn::access(pkt)->size();
+
+	if (maxseq < 0) {
+		// This is the first data packet.
+    maxseq = tfrch->seqno - 1 ;
+		maxseqList = tfrch->seqno;
+		rtvec_=(double *)malloc(sizeof(double)*hsz);
+		tsvec_=(double *)malloc(sizeof(double)*hsz);
+		lossvec_=(char *)malloc(sizeof(double)*hsz);
+		if (rtvec_ && lossvec_) {
+			int i;
+			for (i = 0; i < hsz ; i ++) {
+				lossvec_[i] = UNKNOWN;
+				rtvec_[i] = -1; 
+				tsvec_[i] = -1; 
+			}
+		}
+		else {
+			printf ("error allocating memory for packet buffers\n");
+			abort (); 
+		}
+	}
+	/* for the time being, we will ignore out of order and duplicate 
+	   packets etc. */
+  int seqno = tfrch->seqno ;
+	fsize_ = tfrch->fsize;
+	int oldmaxseq = maxseq;
+	// if this is the highest packet yet, or an unknown packet
+	//   between maxseqList and maxseq  
+	if ((seqno > maxseq) || 
+	  (seqno > maxseqList && lossvec_[seqno%hsz] == UNKNOWN )) {
+		if (seqno > maxseqList + 1)
+			++ numPktsSoFar_;
+		  UrgentFlag = tfrch->UrgentFlag;
+		  round_id = tfrch->round_id ;
+	    rtt_=tfrch->rtt;
+		  tzero_=tfrch->tzero;
+		  psize_=tfrch->psize;
+		  last_arrival_=now;
+		  last_timestamp_=tfrch->timestamp;
+		rtvec_[seqno%hsz]=now;	
+		tsvec_[seqno%hsz]=last_timestamp_;	
+		if (hf->ect() == 1 && hf->ce() == 1) {
+			// ECN action
+			lossvec_[seqno%hsz] = ECN_RCVD;
+			++ total_losses_;
+			losses_since_last_report++;
+			if (new_loss(seqno, tsvec_[seqno%hsz])) {
+				ecnEvent = 1;
+				lossvec_[seqno%hsz] = ECNLOST;
+			} 
+			if (algo == WALI) {
+                       		++ losses[0];
+			}
+		} else lossvec_[seqno%hsz] = RCVD;
+	}
+	if (seqno > maxseq) {
+		int i = maxseq + 1;
+		while (i < seqno) {
+			// Added 3/1/05 in case we have wrapped around
+			//   in packet sequence space.
+			lossvec_[i%hsz] = UNKNOWN;
+			++ i;
+			++ total_losses_;
+			++ total_dropped_;
+		}
+	}
+	if (seqno > maxseqList && 
+	  (ecnEvent || numPktsSoFar_ >= numPkts_ ||
+	     tsvec_[seqno%hsz] - tsvec_[maxseqList%hsz] > rtt_)) {
+		// numPktsSoFar_ >= numPkts_:
+		// Number of pkts since we last entered this procedure
+		//   at least equal numPkts_, the number of non-sequential 
+		//   packets that must be seen before inferring loss.
+		// maxseqList: max seq number checked for dropped packets
+		// Decide which losses begin new loss events.
+		int i = maxseqList ;
+		while(i < seqno) {
+			if (lossvec_[i%hsz] == UNKNOWN) {
+				rtvec_[i%hsz]=now;	
+				tsvec_[i%hsz]=estimate_tstamp(oldmaxseq, seqno, i);	
+				if (new_loss(i, tsvec_[i%hsz])) {
+					congestionEvent = 1;
+					lossvec_[i%hsz] = LOST;
+				} else {
+					// This lost packet is marked "NOT_RCVD"
+					// as it does not begin a loss event.
+					lossvec_[i%hsz] = NOT_RCVD; 
+				}
+				if (algo == WALI) {
+			    		++ losses[0];
+				}
+				losses_since_last_report++;
+			}
+			i++;
+		}
+		maxseqList = seqno;
+		numPktsSoFar_ = 0;
+	} else if (seqno == maxseqList + 1) {
+		maxseqList = seqno;
+		numPktsSoFar_ = 0;
+	} 
+	if (seqno > maxseq) {
+		 maxseq = tfrch->seqno ;
+		// if we are in slow start (i.e. (loss_seen_yet ==0)), 
+		// and if we saw a loss, report it immediately
+		if ((algo == WALI) && (loss_seen_yet ==0) && 
+		  (tfrch->seqno - oldmaxseq > 1 || ecnEvent )) {
+			UrgentFlag = 1 ; 
+			loss_seen_yet = 1;
+			if (adjust_history_after_ss) {
+				p = adjust_history(tfrch->timestamp);
+			}
+
+		}
+		if ((rtt_ > SMALLFLOAT) && 
+			(now - last_report_sent >= rtt_/NumFeedback_)) {
+			UrgentFlag = 1 ;
+		}
+	}
+	if (UrgentFlag || ecnEvent || congestionEvent) {
+		nextpkt(p);
+	}
+	Packet::free(pkt);
+}
+
+/*
+ * Schedule sending this report, and set timer for the next one.
+ */
+void SctpRateHybridSink::nextpkt(double p) {
+
+	sendpkt(p);
+
+	/* schedule next report rtt/NumFeedback_ later */
+	/* note from Sally: why is this 1.5 instead of 1.0? */
+	if (rtt_ > 0.0 && NumFeedback_ > 0) 
+		nack_timer_.resched(1.5*rtt_/NumFeedback_);
+}
+
+/*
+ * Create report message, and send it.
+ */
+void SctpRateHybridSink::sendpkt(double p)
+{
+	double now = Scheduler::instance().clock();
+
+	/*don't send an ACK unless we've received new data*/
+	/*if we're sending slower than one packet per RTT, don't need*/
+	/*multiple responses per data packet.*/
+        /*
+	 * Do we want to send a report even if we have not received
+	 * any new data?
+         */ 
+
+	if (last_arrival_ >= last_report_sent) {
+
+		Packet* pkt = allocpkt();
+		if (pkt == NULL) {
+			printf ("error allocating packet\n");
+			abort(); 
+		}
+	
+		hdr_sctp *tfrc_ackh = hdr_sctp::access(pkt);
+	
+		tfrc_ackh->seqno=maxseq;
+		tfrc_ackh->timestamp_echo=last_timestamp_;
+		tfrc_ackh->timestamp_offset=now-last_arrival_;
+		tfrc_ackh->timestamp=now;
+		//tfrc_ackh->NumFeedback_ = NumFeedback_;
+		if (p < 0) 
+			tfrc_ackh->flost = est_loss (); 
+		else
+			tfrc_ackh->flost = p;
+		tfrc_ackh->rate_since_last_report = est_thput ();
+		tfrc_ackh->losses = losses_since_last_report;
+		if (total_received_ <= 0) 
+			tfrc_ackh->true_loss = 0.0;
+		else 
+			tfrc_ackh->true_loss = 1.0 * 
+			    total_losses_/(total_received_+total_dropped_);
+		last_report_sent = now; 
+		rcvd_since_last_report = 0;
+		losses_since_last_report = 0;
+		send(pkt, 0);
+	}
+}
 /*
  * This takes as input the packet drop rate, and outputs the sending 
  *   rate in bytes per second.

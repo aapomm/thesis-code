@@ -13,7 +13,7 @@
 #define SAMLLFLOAT 0.0000001
 
 #define MAXRATE 25000000.0 
-#define SAMLLFLOAT 0.0000001
+#define SMALLFLOAT 0.0000001
 
 /* packet status */
 #define UNKNOWN 0
@@ -70,6 +70,7 @@ protected:
 	void print_num_rtts_all(int *num_rtts);
 	int new_loss(int i, double tstamp);
 	double estimate_tstamp(int before, int after, int i);
+	virtual void  processTFRCResponse(Packet *pkt, Handler*);
 	
 	// algo specific
 	double est_loss_WALI();
