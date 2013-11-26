@@ -3,10 +3,10 @@ set ns [new Simulator]
 $ns color 1 Blue
 $ns color 2 Red
 
-set nf [open out.nam w]
+set nf [open baseline.nam w]
 $ns namtrace-all $nf
 
-set nd [open RATEHYBRID.tr w]
+set nd [open baseline.tr w]
 $ns trace-all $nd
 
 proc finish {} {

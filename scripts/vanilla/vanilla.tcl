@@ -1,7 +1,7 @@
 set ns [new Simulator]
-set nf [open out.nam w]
+set nf [open vanilla.nam w]
 
-set nd [open RATE.tr w]
+set nd [open vanilla.tr w]
 $ns trace-all $nd
 
 $ns namtrace-all $nf
