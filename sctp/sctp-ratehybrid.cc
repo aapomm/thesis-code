@@ -25,9 +25,8 @@ public:
   }
 } classSctpRateHybrid;
 
-SendTimer::SendTimer(SctpRateHybrid *agent, List_S pktlist) : TimerHandler(){
+SendTimer::SendTimer(SctpRateHybrid *agent) : TimerHandler(){
 	agent_ = agent;
-	pktQ_ = pktlist;
 }
 
 SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
@@ -55,7 +54,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	// printf("isTAILEMPTY? %d\n", pktQ_.spTail == NULL);
 	// printf("length? %d\n", pktQ_.uiLength);
 
-	timer_send = new SendTimer(this, pktQ_);
+	timer_send = new SendTimer(this);
 
 	timer_send->sched(snd_rate);
  	total = 0;
@@ -234,14 +233,14 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   // }
 
 	  if(dRouteCalcDelay == 0){
-	  		timer_send->addToList(opPacket);
+	  		addToList(opPacket);
 	      // send(opPacket, 0);
 	      // timer_send->resched(snd_rate);
 	  }
 	  else{
 	  	if(spDest->eRouteCached == TRUE){
 		  spDest->opRouteCacheFlushTimer->resched(dRouteCacheLifetime);
-		  timer_send->addToList(opPacket);
+		  addToList(opPacket);
 		  // send(opPacket, 0);
 	  	//   timer_send->resched(snd_rate);
 		}
@@ -275,57 +274,24 @@ void SctpRateHybrid::cancelTimer(){
 }
 
 void SendTimer::expire(Event*){
-	// printf("sendtimer expire!\n");
-	//DEQUEUE	
-	if(pktQ_.spHead == NULL){
-		printf("%d %lf\n", agent_->size_, agent_->rate_);
-		resched(agent_->size_/agent_->rate_);
-		// if(pktQ_.uiLength>0){
-		// 	printf("FUCK MAN! %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
-		// }
-		// printf("sendtimer expired! time: %lf\n", Scheduler::instance().clock());
-		// getchar();
-		return;
-	}
-
-	Node_S *node = pktQ_.spHead;
-
-	if(node->spNext != NULL){ 
-		pktQ_.spHead = node->spNext; 
-	} 
-	else {
-		pktQ_.spHead = NULL;
-		pktQ_.spTail = NULL;
-	}
-
-	agent_->send((Packet *)(node->vpData),0);
-	// printf("send %lf!\n", SEND_RATE);
-	printf("%lf\n", agent_->rate_); 	
-	resched(agent_->uiMaxPayloadSize/agent_->rate_);
-
-	// delete (Packet *) node->vpData;
-	node->vpData = NULL;
-	delete node;
-
-	pktQ_.uiLength--;
-	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
+	agent_->nextpkt();
 }
 
-void SendTimer::addToList(Packet *p){
+void SctpRateHybrid::addToList(Packet *p){
 	Node_S *spNewNode= new Node_S;
 	spNewNode->vpData = p;
 
-  if(pktQ_.spTail == NULL)
-    pktQ_.spHead = spNewNode;
-  else
-    pktQ_.spTail->spNext = spNewNode;
+	if(pktQ_.spTail == NULL)
+		pktQ_.spHead = spNewNode;
+	else
+		pktQ_.spTail->spNext = spNewNode;
 
-  spNewNode->spPrev = pktQ_.spTail;
-  spNewNode->spNext = NULL;
+	spNewNode->spPrev = pktQ_.spTail;
+	spNewNode->spNext = NULL;
 
-  pktQ_.spTail = spNewNode;
+	pktQ_.spTail = spNewNode;
 
-  pktQ_.uiLength++;
+	pktQ_.uiLength++;
 
   // printf("add! length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
@@ -623,4 +589,38 @@ void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
 	}
 	*/
 	//nextpkt();
+}
+
+void SctpRateHybrid::nextpkt(){
+	// printf("sendtimer expire!\n");
+	//DEQUEUE	
+	if(pktQ_.spHead == NULL){
+		printf("%d %lf\n", size_, rate_);
+		timer_send->resched(size_/rate_);
+		// printf("sendtimer expired! time: %lf\n", Scheduler::instance().clock());
+		// getchar();
+		return;
+	}
+
+	Node_S *node = pktQ_.spHead;
+
+	if(node->spNext != NULL){ 
+		pktQ_.spHead = node->spNext; 
+	} 
+	else {
+		pktQ_.spHead = NULL;
+		pktQ_.spTail = NULL;
+	}
+
+	send((Packet *)(node->vpData),0);
+	// printf("send %lf!\n", SEND_RATE);
+	printf("%lf\n", rate_); 	
+	timer_send->resched(uiMaxPayloadSize/rate_);
+
+	// delete (Packet *) node->vpData;
+	node->vpData = NULL;
+	delete node;
+
+	pktQ_.uiLength--;
+	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }

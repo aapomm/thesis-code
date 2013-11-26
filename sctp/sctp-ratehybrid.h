@@ -17,13 +17,11 @@ class SctpRateHybrid;
 class SendTimer : public TimerHandler
 {
 public:
-  SendTimer(SctpRateHybrid *a, List_S pktlist);
-  virtual void addToList(Packet *p);
-  virtual void expire(Event *e);
+	SendTimer(SctpRateHybrid *a);
+	virtual void expire(Event *e);
 
 protected:
 	SctpRateHybrid *agent_;
-	List_S pktQ_;
 };
 
 class SctpTfrcNoFeedbackTimer : public TimerHandler {
@@ -45,14 +43,15 @@ private:
 	List_S pktQ_;
 
 protected:
-  virtual void  delay_bind_init_all();
-  virtual int   delay_bind_dispatch(const char *varName, const char *localName,
+	virtual void  delay_bind_init_all();
+	virtual int   delay_bind_dispatch(const char *varName, const char *localName,
 				    TclObject *tracer);
-  virtual void SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest);
-  virtual void SendMuch();
-  virtual bool askPerm();
-  virtual void cancelTimer();
-  virtual void TFRC_update(Packet *pkt);
+	virtual void SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest);
+	virtual void SendMuch();
+	virtual bool askPerm();
+	virtual void cancelTimer();
+	virtual void TFRC_update(Packet *pkt);
+	virtual void addToList(Packet *p);
   // virtual void recv(Packet *pkt, Handler*);
 
 	/* variables for TFRC integration
@@ -72,7 +71,7 @@ protected:
 	double last_change_;	// time last change in rate was made
 	double lastlimited_;	// time sender was last datalimited.
   	//End of Dynamic State
-  int seqno_;
+	int seqno_;
 
 	/* Responses to heavy congestion. */
 	int conservative_;	// set to 1 for an experimental, conservative 
@@ -134,6 +133,7 @@ public:
   	virtual void increase_rate(double p);
   	virtual void decrease_rate();
   	virtual double initial_rate();
+  	virtual void nextpkt();
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);	
   	double rate_;
