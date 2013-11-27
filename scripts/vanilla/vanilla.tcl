@@ -16,11 +16,12 @@ proc finish {} {
 }
 
 set source [$ns node]
-set sctp0 [new Agent/SCTP/Ratehybrid]
+set sctp0 [new Agent/TFRC]
+$sctp0 set debug_ 1
 $ns attach-agent $source $sctp0
 
 set sink [$ns node]
-set sctp1 [new Agent/SCTP/RatehybridSink]
+set sctp1 [new Agent/TFRCSink]
 $ns attach-agent $sink $sctp1
 
 $ns connect $sctp0 $sctp1
