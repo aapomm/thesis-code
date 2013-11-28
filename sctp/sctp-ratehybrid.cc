@@ -624,3 +624,62 @@ void SctpRateHybrid::nextpkt(){
 	pktQ_.uiLength--;
 	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
+
+void TfrcAgent::slowstart () 
+{
+	double now = Scheduler::instance().clock(); 
+	double initrate = initial_rate()*size_/rtt_;
+	printf("%5.2f, %d, %lf\n", initial_rate(), size_, rtt_);
+	// If slow_increase_ is set to true, delta is used so that 
+	//  the rate increases slowly to new value over an RTT. 
+	if (debug_) printf("SlowStart: round_id: %d rate: %7.2f ss_maxrate_: %5.2f\n", round_id, rate_, ss_maxrate_);
+	if (round_id <=1 || (round_id == 2 && initial_rate() > 1)) {
+		// We don't have a good rate report yet, so keep to  
+		//   the initial rate.
+		printf("SlowStart: Keep to the initial rate, which is %7.2f\n", initrate);				     
+		oldrate_ = rate_;
+		if (rate_ < initrate) rate_ = initrate;
+		delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
+		last_change_=now;
+	} else if (ss_maxrate_ > 0) {
+		printf("SlowStart: Maxrate > 0\n");
+		if (idleFix_ && (datalimited_ || lastlimited_ > now - 1.5*rtt_)
+			     && ss_maxrate_ < initrate) {
+			// Datalimited recently, and maxrate is small.
+			// Don't be limited by maxrate to less that initrate.
+			oldrate_ = rate_;
+			if (rate_ < initrate) rate_ = initrate;
+			delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
+			last_change_=now;
+		} else if (rate_ < ss_maxrate_ && 
+		                    now - last_change_ > rtt_) {
+			// Not limited by maxrate, and time to increase.
+			// Multiply the rate by ssmult_, if maxrate allows.
+			oldrate_ = rate_;
+			if (ssmult_*rate_ > ss_maxrate_) 
+				rate_ = ss_maxrate_;
+			else rate_ = ssmult_*rate_;
+			if (rate_ < size_/rtt_) 
+				rate_ = size_/rtt_; 
+			delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
+			last_change_=now;
+		} else if (rate_ > ss_maxrate_) {
+			// Limited by maxrate.  
+			rate_ = oldrate_ = ss_maxrate_/2.0;
+			delta_ = 0;
+			last_change_=now;
+		} 
+	} else {
+		// If we get here, ss_maxrate <= 0, so the receive rate is 0.
+		// We should go back to a very small sending rate!!!
+		oldrate_ = rate_;
+		rate_ = size_/rtt_; 
+		delta_ = 0;
+        	last_change_=now;
+	}
+	if (debug_) printf("SlowStart: now: %5.2f rate: %5.2f delta: %5.2f\n", now, rate_, delta_);
+	if (printStatus_) {
+		double rate = rate_ * rtt_ / size_;
+	  	printf("SlowStart: now: %5.2f rate: %5.2f ss_maxrate: %5.2f delta: %5.2f\n", now, rate, ss_maxrate_, delta_);
+	}
+}
