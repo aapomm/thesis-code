@@ -427,7 +427,7 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	/* then come out of slow start */
 	if (first_pkt_rcvd == 0) {
 		first_pkt_rcvd = 1 ; 
-		//slowstart();
+		slowstart();
 		//nextpkt();
 	}
 	else {
@@ -437,7 +437,7 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 				oldrate_ = rate_ = rcvrate;
 			}
 			else {
-				//slowstart();
+				slowstart();
 				//nextpkt();
 			}
 		}
