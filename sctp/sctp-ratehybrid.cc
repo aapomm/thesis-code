@@ -87,7 +87,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	// all_idle_ = 0;
 
 	first_pkt_rcvd = 0 ;
-
+	delta_ = 0;
 	printf("RATEHYBRID.\n");
 }
 
@@ -625,7 +625,7 @@ void SctpRateHybrid::nextpkt(){
 	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
 
-void TfrcAgent::slowstart () 
+void SctpRateHybrid::slowstart () 
 {
 	double now = Scheduler::instance().clock(); 
 	double initrate = initial_rate()*size_/rtt_;

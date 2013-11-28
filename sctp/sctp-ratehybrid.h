@@ -119,6 +119,11 @@ protected:
 
 	int UrgentFlag;		// urgent flag
 	SctpTfrcNoFeedbackTimer NoFeedbacktimer_;
+
+	double delta_;
+	int printStatus_;
+	int idleFix_;
+	double ssmult_;	
 	/* end of TFRC integration variables
 	*/
 
