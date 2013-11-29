@@ -140,6 +140,7 @@ public:
   	virtual double initial_rate();
   	virtual void nextpkt();
   	virtual void slowstart();
+  	virtual void  sendmsg(int nbytes, const char *flags = 0);
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);	
   	double rate_;

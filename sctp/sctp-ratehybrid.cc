@@ -54,15 +54,12 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	// printf("isTAILEMPTY? %d\n", pktQ_.spTail == NULL);
 	// printf("length? %d\n", pktQ_.uiLength);
 
-	timer_send = new SendTimer(this);
-
-	timer_send->sched(snd_rate);
  	total = 0;
 
  	//test initialization
 	// seqno_=0;				
  	// rate_ = InitRate_;
- 	rate_ = 300.0;
+ 	rate_ = 100000.0;
 	// delta_ = 0;
 	oldrate_ = rate_;  
 	// rate_change_ = SLOW_START;
@@ -88,6 +85,13 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 
 	first_pkt_rcvd = 0 ;
 	delta_ = 0;
+
+	timer_send = new SendTimer(this);
+
+	printf("size_: %d, rate_: %lf, initrate_: %lf\n", size_, rate_, size_/rate_);
+	size_ = 1460;
+	timer_send->sched(size_/rate_);
+
 	printf("RATEHYBRID.\n");
 }
 
@@ -566,7 +570,7 @@ double SctpRateHybrid::rfc3390(int size)
 
 void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
 {
-	double now = Scheduler::instance().clock();
+	// double now = Scheduler::instance().clock();
 	// Assumption: Datalimited and/or all_idle_
 	// and use RFC 3390
 	//rtt_ = spDest->dSrtt;
@@ -614,7 +618,7 @@ void SctpRateHybrid::nextpkt(){
 
 	send((Packet *)(node->vpData),0);
 	// printf("send %lf!\n", SEND_RATE);
-	printf("%lf\n", rate_); 	
+	printf("this: %d, %lf\n", uiMaxPayloadSize, rate_); 	
 	timer_send->resched(uiMaxPayloadSize/rate_);
 
 	// delete (Packet *) node->vpData;
@@ -682,4 +686,162 @@ void SctpRateHybrid::slowstart ()
 		double rate = rate_ * rtt_ / size_;
 	  	printf("SlowStart: now: %5.2f rate: %5.2f ss_maxrate: %5.2f delta: %5.2f\n", now, rate, ss_maxrate_, delta_);
 	}
+}
+
+void SctpRateHybrid::sendmsg(int iNumBytes, const char *cpFlags)
+{
+  /* Let's make sure that a Reset() is called, because it isn't always
+   * called explicitly with the "reset" command. For example, wireless
+   * nodes don't automatically "reset" their agents, but wired nodes do. 
+   */
+  if(eState == SCTP_STATE_UNINITIALIZED)
+    Reset();
+
+  u_char *ucpOutData = new u_char[uiMaxPayloadSize];
+  int iOutDataSize = 0;
+  AppData_S *spAppData = (AppData_S *) cpFlags;
+  Node_S *spNewNode = NULL;
+  int iMsgSize = 0;
+  u_int uiMaxFragSize = uiMaxDataSize - sizeof(SctpDataChunkHdr_S);
+
+  if(iNumBytes == -1) 
+    eDataSource = DATA_SOURCE_INFINITE;    // Send infinite data
+  else 
+    eDataSource = DATA_SOURCE_APPLICATION; // Send data passed from app
+      
+  if(eDataSource == DATA_SOURCE_APPLICATION) 
+    {
+      if(spAppData != NULL)
+	{
+	  /* This is an SCTP-aware app!! Anything the app passes down
+	   * overrides what we bound from TCL.
+	   */
+	  spNewNode = new Node_S;
+	  uiNumOutStreams = spAppData->usNumStreams;
+	  uiNumUnrelStreams = spAppData->usNumUnreliable;
+	  spNewNode->eType = NODE_TYPE_APP_LAYER_BUFFER;
+	  spNewNode->vpData = spAppData;
+	  InsertNode(&sAppLayerBuffer, sAppLayerBuffer.spTail, spNewNode,NULL);
+	}
+      else
+	{
+	  /* This is NOT an SCTP-aware app!! We rely on TCL-bound variables.
+	   */
+	  uiNumOutStreams = 1; // non-sctp-aware apps only use 1 stream
+	  uiNumUnrelStreams = (uiNumUnrelStreams > 0) ? 1 : 0;
+
+	  /* To support legacy applications and uses such as "ftp send
+	   * 12000", we "fragment" the message. _HOWEVER_, this is not
+	   * REAL SCTP fragmentation!! We do not maintain the same SSN or
+	   * use the B/E bits. Think of this block of code as a shim which
+	   * breaks up the message into useable pieces for SCTP. 
+	   */
+	  for(iMsgSize = iNumBytes; 
+	      iMsgSize > 0; 
+	      iMsgSize -= MIN(iMsgSize, (int) uiMaxFragSize) )
+	    {
+	      spNewNode = new Node_S;
+	      spNewNode->eType = NODE_TYPE_APP_LAYER_BUFFER;
+	      spAppData = new AppData_S;
+	      spAppData->usNumStreams = uiNumOutStreams;
+	      spAppData->usNumUnreliable = uiNumUnrelStreams;
+	      spAppData->usStreamId = 0;  
+	      spAppData->usReliability = uiReliability;
+	      spAppData->eUnordered = eUnordered;
+	      spAppData->uiNumBytes = MIN(iMsgSize, (int) uiMaxFragSize);
+	      spNewNode->vpData = spAppData;
+	      InsertNode(&sAppLayerBuffer, sAppLayerBuffer.spTail, 
+			 spNewNode, NULL);
+	    }
+	}      
+
+      if(uiNumOutStreams > MAX_NUM_STREAMS)
+	{
+	  fprintf(stderr, "%s number of streams (%d) > max (%d)\n",
+		  "SCTP ERROR:",
+		  uiNumOutStreams, MAX_NUM_STREAMS);
+	  exit(-1);
+	}
+      else if(uiNumUnrelStreams > uiNumOutStreams)
+	{
+	  fprintf(stderr,"%s number of unreliable streams (%d) > total (%d)\n",
+		  "SCTP ERROR:",
+		  uiNumUnrelStreams, uiNumOutStreams);
+	  exit(-1);
+	}
+
+      if(spAppData->uiNumBytes + sizeof(SctpDataChunkHdr_S) 
+	 > MAX_DATA_CHUNK_SIZE)
+	{
+	  fprintf(stderr, "SCTP ERROR: message size (%d) too big\n",
+		  spAppData->uiNumBytes);
+	  fprintf(stderr, "%s data chunk size (%lu) > max (%d)\n",
+		  "SCTP ERROR:",
+		  spAppData->uiNumBytes + 
+		    (unsigned long) sizeof(SctpDataChunkHdr_S), 
+		  MAX_DATA_CHUNK_SIZE);
+	  exit(-1);
+	}
+      else if(spAppData->uiNumBytes + sizeof(SctpDataChunkHdr_S)
+	      > uiMaxDataSize)
+	{
+	  fprintf(stderr, "SCTP ERROR: message size (%d) too big\n",
+		  spAppData->uiNumBytes);
+	  fprintf(stderr, 
+		  "%s data chunk size (%lu) + SCTP/IP header(%d) > MTU (%d)\n",
+		  "SCTP ERROR:",
+		  spAppData->uiNumBytes + 
+		    (unsigned long) sizeof(SctpDataChunkHdr_S),
+		  SCTP_HDR_SIZE + uiIpHeaderSize, uiMtu);
+	  fprintf(stderr, "           %s\n",
+		  "...chunk fragmentation is not yet supported!");
+	  exit(-1);
+	}
+    }
+
+  switch(eState)
+    {
+    case SCTP_STATE_CLOSED:
+
+      /* This must be done especially since some of the legacy apps use their
+       * own packet type (don't ask me why). We need our packet type to be
+       * sctp so that our tracing output comes out correctly for scripts, etc
+       */
+      set_pkttype(PT_SCTP); 
+      iOutDataSize = GenChunk(SCTP_CHUNK_INIT, ucpOutData);
+      opT1InitTimer->resched(spPrimaryDest->dRto);
+      eState = SCTP_STATE_COOKIE_WAIT;
+      // printf("DITO KA KAYA?\n");
+      SendPacket(ucpOutData, iOutDataSize, spPrimaryDest);
+      break;
+      
+    case SCTP_STATE_ESTABLISHED:
+      if(eDataSource == DATA_SOURCE_APPLICATION) 
+	{ 
+	  /* NE: 10/12/2007 Check if all the destinations are confirmed (new
+	     data can be sent) or there are any marked chunks. */
+	  if(eSendNewDataChunks == TRUE && eMarkedChunksPending == FALSE) 
+	    {
+	      SendMuch();
+        // printf("SENDMSG\n");
+	      eSendNewDataChunks = FALSE;
+	    }
+	}
+      else if(eDataSource == DATA_SOURCE_INFINITE)
+	{
+	  fprintf(stderr, "[sendmsg] ERROR: unexpected state... %s\n",
+		  "sendmsg called more than once for infinite data");
+	  exit(-1);
+	}
+      break;
+      
+    default:  
+      /* If we are here, we assume the application is trying to send data
+       * before the 4-way handshake has completed. ...so buffering the
+       * data is ok, but DON'T send it yet!!  
+       */
+      break;
+    }
+
+  delete [] ucpOutData;
 }

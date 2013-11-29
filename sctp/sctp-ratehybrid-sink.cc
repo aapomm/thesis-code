@@ -427,6 +427,8 @@ Packet* SctpRateHybridSink::addTFRCHeaders(Packet* pkt, double p)
 		losses_since_last_report = 0;
     return pkt;
 	}
+
+	return NULL;
 }
 /*
  * This takes as input the packet drop rate, and outputs the sending 

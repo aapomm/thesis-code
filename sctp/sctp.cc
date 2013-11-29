@@ -6060,6 +6060,7 @@ void SctpAgent::SendMuch()
 
 void SctpAgent::sendmsg(int iNumBytes, const char *cpFlags)
 {
+  // double now = Scheduler::instance().clock();
   /* Let's make sure that a Reset() is called, because it isn't always
    * called explicitly with the "reset" command. For example, wireless
    * nodes don't automatically "reset" their agents, but wired nodes do. 
@@ -6217,7 +6218,7 @@ void SctpAgent::sendmsg(int iNumBytes, const char *cpFlags)
 	  if(eSendNewDataChunks == TRUE && eMarkedChunksPending == FALSE) 
 	    {
 	      SendMuch();
-        printf("SENDMSG\n");
+        // printf("SENDMSG\n");
 	      eSendNewDataChunks = FALSE;
 	    }
 	}
