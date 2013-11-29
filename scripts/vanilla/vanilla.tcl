@@ -11,7 +11,7 @@ proc finish {} {
 	$ns flush-trace
 	close $nf
 	close $nd
-	exec nam out.nam &
+	#exec nam out.nam &
 	exit 0
 }
 
