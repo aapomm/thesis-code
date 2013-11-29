@@ -25,7 +25,7 @@ BEGIN {
 
   if (time < nxt_time_instance)
     { 
-      if (action == "r" && flow_id == 1 && to == 4)
+      if (action == "r" && flow_id == 1)
       {
         #SCTP
         #bytes_recvd = bytes_recvd + pkt_size; 

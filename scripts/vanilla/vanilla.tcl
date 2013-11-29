@@ -11,17 +11,20 @@ proc finish {} {
 	$ns flush-trace
 	close $nf
 	close $nd
-	exec nam out.nam &
+	#exec nam out.nam &
 	exit 0
 }
 
 set source [$ns node]
-set sctp0 [new Agent/TFRC]
-$sctp0 set debug_ 1
+set sctp0 [new Agent/SCTP/Ratehybrid]
+# set sctp0 [new Agent/TFRC]
+#$sctp0 set debug_ 1
+$sctp0 set fid_ 1
 $ns attach-agent $source $sctp0
 
 set sink [$ns node]
-set sctp1 [new Agent/TFRCSink]
+set sctp1 [new Agent/SCTP/RatehybridSink]
+# set sctp1 [new Agent/TFRCSink]
 $ns attach-agent $sink $sctp1
 
 $ns connect $sctp0 $sctp1
