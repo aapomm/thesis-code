@@ -599,7 +599,6 @@ void SctpRateHybrid::nextpkt(){
 	// printf("sendtimer expire!\n");
 	//DEQUEUE	
 	if(pktQ_.spHead == NULL){
-		printf("%d %lf\n", size_, rate_);
 		timer_send->resched(size_/rate_);
 		// printf("sendtimer expired! time: %lf\n", Scheduler::instance().clock());
 		// getchar();
