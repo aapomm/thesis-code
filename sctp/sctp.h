@@ -214,6 +214,7 @@ struct hdr_sctp
   int losses;
   double NumFeedback_;
   double true_loss;
+  int tfrc_feedback; // Is this a feedback packet?
 
   // Values needed by the receiver
 
@@ -236,7 +237,7 @@ struct hdr_sctp
   // "round_id" is used by PreciseLoss_, a variant for more
   //  precise loss events that is on by default.
   int round_id ;    //round id.
-  
+  int contains_data; // Does this packet contain DATA chunks?
   u_int&        NumChunks() { return uiNumChunks; }
   SctpTrace_S*& SctpTrace() { return spSctpTrace; }
 };

@@ -133,8 +133,12 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   eStartOfPacket = TRUE;
 
+  printf("uid_: %d\t data: %d\n", hdr_cmn::access(opInPkt)->uid_, hdr_sctp::access(opInPkt)->contains_data);
+
   // compute TFRC response
-  processTFRCResponse(opInPkt);
+  if (hdr_sctp::access(opInPkt)->contains_data == 1) {
+  	processTFRCResponse(opInPkt);
+  }
   do
     {
       //DBG_PL(recv, "iRemainingDataLen=%d"), iRemainingDataLen DBG_PR;
@@ -245,7 +249,7 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 	total_received_ ++;
 	// bytes_ was added by Tom Phelan, for reporting bytes received.
 	bytes_ += hdr_cmn::access(pkt)->size();
-
+	tfrch->tfrc_feedback = 1;
 	if (maxseq < 0) {
 		// This is the first data packet.
     maxseq = tfrch->seqno - 1 ;
