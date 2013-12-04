@@ -368,7 +368,8 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
      	eSendNewDataChunks = FALSE; // reset AFTER sent (o/w breaks dependencies)
     }
 
-  TFRC_update(opInPkt);
+  if(hdr_sctp::access(opInPkt)->timestamp_echo != 0)
+    TFRC_update(opInPkt);
 
 	//FREE PACKET
  	delete hdr_sctp::access(opInPkt)->SctpTrace();
