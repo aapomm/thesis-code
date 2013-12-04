@@ -1605,6 +1605,7 @@ Agent/SCTP/Ratehybrid set rtxcur_init_ 6.0
 Agent/SCTP/Ratehybrid set rttvar_exp_ 2	
 Agent/SCTP/Ratehybrid set T_SRTT_BITS 3	
 Agent/SCTP/Ratehybrid set T_RTTVAR_BITS 2	
+Agent/SCTP/Ratehybrid set df_ 0.95
 # VoIP mode:
 Agent/SCTP/Ratehybrid set voip_ 0 ;        # Added on 10/23/2004      
 				# 1 for voip mode.

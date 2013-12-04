@@ -17,14 +17,12 @@ proc finish {} {
 
 set source [$ns node]
 set sctp0 [new Agent/SCTP/Ratehybrid]
-# set sctp0 [new Agent/TFRC]
 #$sctp0 set debug_ 1
 $sctp0 set fid_ 1
 $ns attach-agent $source $sctp0
 
 set sink [$ns node]
 set sctp1 [new Agent/SCTP/RatehybridSink]
-# set sctp1 [new Agent/TFRCSink]
 $ns attach-agent $sink $sctp1
 
 $ns connect $sctp0 $sctp1
@@ -37,6 +35,6 @@ $cbr0 set rate_ 5mb
 $cbr0 attach-agent $sctp0
 
 $ns at 1.0 "$cbr0 start"
-$ns at 6.0 "finish"
+$ns at 20.0 "finish"
 
 $ns run

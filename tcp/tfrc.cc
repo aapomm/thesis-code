@@ -265,6 +265,8 @@ void TfrcAgent::nextpkt()
 	} else {
 		if (ca_) {
 			if (debug_) printf("SQRT: now: %5.2f factor: %5.2f\n", Scheduler::instance().clock(), sqrtrtt_/sqrt(rttcur_));
+			printf("tfrc sqrtrtt: %lf, %lf, %lf\n", rate_, sqrtrtt_, rttcur_);
+			getchar();
 			xrate = rate_ * sqrtrtt_/sqrt(rttcur_);
 		} else
 			xrate = rate_;
@@ -279,6 +281,7 @@ void TfrcAgent::nextpkt()
 		//
 		// randomize between next*(1 +/- woverhead_) 
 		//
+		// printf("tfrc next: %d, %lf, %lf\n", size_, xrate, next);
 		next = next*(2*overhead_*Random::uniform()-overhead_+1);
 		if (next > SMALLFLOAT)
 			send_timer_.resched(next);
@@ -319,6 +322,7 @@ void TfrcAgent::update_rtt (double tao, double now)
 		rtt_ = now - tao;
 		sqrtrtt_ = sqrt(now - tao);
 	}
+	printf("tfrc rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
 	rttcur_ = now - tao;
 }
 

@@ -44,11 +44,14 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	bind("T_RTTVAR_BITS", &T_RTTVAR_BITS);
 	bind("bval_", &bval_);
 	bind_bool("conservative_", &conservative_);
+	bind("ca_", &ca_);
 	bind("minrto_", &minrto_);
 	bind("maxHeavyRounds_", &maxHeavyRounds_);
 	bind("scmult_", &scmult_);
 //	bind("standard_", &standard_);
 	bind("fsize_", &fsize_);
+	bind("overhead_", &overhead_);
+	bind_bool("slow_increase_", &slow_increase_);
 
 	// printf("isHEADEMPTY? %d\n", pktQ_.spHead == NULL);
 	// printf("isTAILEMPTY? %d\n", pktQ_.spTail == NULL);
@@ -62,7 +65,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
  	rate_ = 100000.0;
 	// delta_ = 0;
 	oldrate_ = rate_;  
-	// rate_change_ = SLOW_START;
+	rate_change_ = SLOW_START;
 	UrgentFlag = 1;
 	rtt_=0;	 
 	sqrtrtt_=1;
@@ -88,7 +91,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 
 	timer_send = new SendTimer(this);
 
-	printf("size_: %d, rate_: %lf, initrate_: %lf\n", size_, rate_, size_/rate_);
+	// printf("size_: %d, rate_: %lf, initrate_: %lf\n", size_, rate_, size_/rate_);
 	size_ = 1460;
 	timer_send->sched(size_/rate_);
 
@@ -432,7 +435,7 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	if (first_pkt_rcvd == 0) {
 		first_pkt_rcvd = 1 ; 
 		slowstart();
-		//nextpkt();
+		nextpkt();
 	}
 	else {
 		if (rate_change_ == SLOW_START) {
@@ -442,17 +445,18 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 			}
 			else {
 				slowstart();
-				//nextpkt();
+				nextpkt();
 			}
 		}
 		else {
-			if (rcvrate>rate_) 
+			if (rcvrate>rate_)	{
 				increase_rate(flost);
+			}
 			else 
 				decrease_rate ();		
 		}
 	}
-	bool printStatus_ = true;
+	// bool printStatus_ = true;
 	if (printStatus_) {
 		printf("time: %5.2f rate: %5.2f\n", now, rate_);
 		double packetrate = rate_ * rtt_ / uiMaxPayloadSize;
@@ -493,6 +497,7 @@ void SctpRateHybrid::update_rtt(double tao, double now){
 		rtt_ = now - tao;
 		sqrtrtt_ = sqrt(now - tao);
 	}
+	printf("ratehybrid rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
 	rttcur_ = now - tao;
 }
 
@@ -592,14 +597,18 @@ void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
 		if (debug_) printf("Time: %5.2f Datalimited now.\n", now);
 	}
 	*/
-	//nextpkt();
+	nextpkt();
+	// nextpkt(true);
 }
 
 void SctpRateHybrid::nextpkt(){
+	double next = -1;
+	double xrate = -1;
 	// printf("sendtimer expire!\n");
+
 	//DEQUEUE	
 	if(pktQ_.spHead == NULL){
-		printf("%d %lf\n", size_, rate_);
+		// printf("%d %lf\n", size_, rate_);
 		timer_send->resched(size_/rate_);
 		// printf("sendtimer expired! time: %lf\n", Scheduler::instance().clock());
 		// getchar();
@@ -617,9 +626,40 @@ void SctpRateHybrid::nextpkt(){
 	}
 
 	send((Packet *)(node->vpData),0);
-	// printf("send %lf!\n", SEND_RATE);
-	printf("this: %d, %lf\n", uiMaxPayloadSize, rate_); 	
-	timer_send->resched(uiMaxPayloadSize/rate_);
+	// If slow_increase_ is set, then during slow start, we increase rate
+	// slowly - by amount delta per packet 
+	// printf("ratehybrid values: %d, %d, %d, %lf, %lf\n", slow_increase_, round_id, rate_change_, oldrate_, rate_);
+	// getchar();
+	if (slow_increase_ && round_id > 2 && (rate_change_ == SLOW_START) 
+		       && (oldrate_+SMALLFLOAT< rate_)) {
+		oldrate_ = oldrate_ + delta_;
+		xrate = oldrate_;
+	} else {
+		if (ca_) {
+			if (debug_) printf("SQRT: now: %5.2f factor: %5.2f\n", Scheduler::instance().clock(), sqrtrtt_/sqrt(rttcur_));
+			// printf("ratehybrid sqrtrtt: %lf, %lf, %lf\n", rate_, sqrtrtt_, rttcur_);
+			// getchar();
+			xrate = rate_ * sqrtrtt_/sqrt(rttcur_);
+		} else
+			xrate = rate_;
+	}
+	// printf("ratehybrid xrate: %lf\n", xrate);
+	// getchar();
+	if (xrate > SMALLFLOAT) {
+		next = uiMaxPayloadSize/xrate;
+		//
+		// randomize between next*(1 +/- woverhead_) 
+		//
+		// printf("ratehybrid next: %d, %lf, %lf\n", uiMaxPayloadSize, xrate, next);
+		next = next*(2*overhead_*Random::uniform()-overhead_+1);
+		if (next > SMALLFLOAT)
+			timer_send->resched(next);
+        else 
+			timer_send->resched(SMALLFLOAT);
+	}
+	else{
+		timer_send->resched(uiMaxPayloadSize/rate_);
+	}
 
 	// delete (Packet *) node->vpData;
 	node->vpData = NULL;
@@ -633,7 +673,7 @@ void SctpRateHybrid::slowstart ()
 {
 	double now = Scheduler::instance().clock(); 
 	double initrate = initial_rate()*size_/rtt_;
-	printf("%5.2f, %d, %lf\n", initial_rate(), size_, rtt_);
+	// printf("%5.2f, %d, %lf\n", initial_rate(), size_, rtt_);
 	// If slow_increase_ is set to true, delta is used so that 
 	//  the rate increases slowly to new value over an RTT. 
 	if (debug_) printf("SlowStart: round_id: %d rate: %7.2f ss_maxrate_: %5.2f\n", round_id, rate_, ss_maxrate_);
@@ -646,7 +686,7 @@ void SctpRateHybrid::slowstart ()
 		delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
 		last_change_=now;
 	} else if (ss_maxrate_ > 0) {
-		printf("SlowStart: Maxrate > 0\n");
+		// printf("SlowStart: Maxrate > 0\n");
 		if (idleFix_ && (datalimited_ || lastlimited_ > now - 1.5*rtt_)
 			     && ss_maxrate_ < initrate) {
 			// Datalimited recently, and maxrate is small.
