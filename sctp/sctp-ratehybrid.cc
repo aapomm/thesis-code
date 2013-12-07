@@ -618,6 +618,7 @@ void SctpRateHybrid::nextpkt(){
 		pktQ_.spTail = NULL;
 	}
 
+	hdr_sctp::access((Packet *)(node->vpData))->timestamp = Scheduler::instance().clock();
 	send((Packet *)(node->vpData),0);
 	// printf("send %lf!\n", SEND_RATE);
 	printf("this: %d, %lf\n", uiMaxPayloadSize, rate_); 	
