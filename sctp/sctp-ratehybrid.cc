@@ -474,6 +474,7 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 
 void SctpRateHybrid::update_rtt(double tao, double now){
 
+  printf("update rtt!!!!!\n");
 	t_rtt_ = int((now-tao) /tcp_tick_ + 0.5);
 	if (t_rtt_==0) t_rtt_=1;
 	if (t_srtt_ != 0) {

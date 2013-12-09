@@ -735,8 +735,11 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 
   printf("uiNumChunks: %d\n", uiNumChunks);
 
+  if(sendReport || uiNumChunks == 0)
+  {
     opPacket = addTFRCHeaders(opPacket, p);
     sendReport = false;
+  }
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
     {
