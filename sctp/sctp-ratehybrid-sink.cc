@@ -762,7 +762,8 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 }
 
 void SctpRateHybridSinkNackTimer::expire(Event *){
-  printf("puta\n");
+  a_->p = -1;
+  a_->SendPacket(NULL, 0, a_->spReplyDest);
 }
 
 /*
