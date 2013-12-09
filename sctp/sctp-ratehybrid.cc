@@ -630,6 +630,7 @@ void SctpRateHybrid::nextpkt(){
 		pktQ_.spTail = NULL;
 	}
 
+	hdr_sctp::access((Packet *)(node->vpData))->timestamp = Scheduler::instance().clock();
 	send((Packet *)(node->vpData),0);
 	// If slow_increase_ is set, then during slow start, we increase rate
 	// slowly - by amount delta per packet 
