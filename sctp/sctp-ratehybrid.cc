@@ -218,7 +218,6 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   memcpy(sctph->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
-	sctph->seqno=seqno_++;
 	sctph->timestamp=Scheduler::instance().clock();
 	sctph->rtt=rtt_;
 	sctph->tzero=tzero_;
@@ -227,7 +226,10 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
 	sctph->fsize=fsize_;
 	sctph->UrgentFlag=UrgentFlag;
 	sctph->round_id=round_id;
-	if (sendData_) sctph->contains_data = 1;
+	if (sendData_) {
+		sctph->contains_data = 1;
+		sctph->seqno=seqno_++;
+	}
   uiNumChunks = 0; // reset the counter
 
 // printf("time: %lf\n", Scheduler::instance().clock());
