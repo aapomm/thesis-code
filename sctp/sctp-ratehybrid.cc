@@ -63,7 +63,6 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	// seqno_=0;				
  	// rate_ = InitRate_;
  	rate_ = 100000.0;
-	// delta_ = 0;
 	oldrate_ = rate_;  
 	rate_change_ = SLOW_START;
 	UrgentFlag = 1;
@@ -371,6 +370,7 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
      	eSendNewDataChunks = FALSE; // reset AFTER sent (o/w breaks dependencies)
     }
 
+  // if(hdr_sctp::access(opInPkt)->timestamp_echo != 0)
     TFRC_update(opInPkt);
 
 	//FREE PACKET
@@ -391,6 +391,7 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	//double ts = nck->timestamp_echo;
 	double ts = nck->timestamp_echo + nck->timestamp_offset;
 	double rate_since_last_report = nck->rate_since_last_report;
+	// printf("tfrc rslr: %lf\n", rate_since_last_report);
 	// double NumFeedback_ = nck->NumFeedback_;
 	double flost = nck->flost; 
 	int losses = nck->losses;
@@ -420,6 +421,11 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	}
 
 	/* update the round trip time */
+	// if(ts == 0){
+	// 	ts = now - 0.04;
+	// }
+	printf("ratehybrid ts: %lf\n", ts);
+	getchar();
 	update_rtt (ts, now);
 
 	rcvrate = p_to_b(flost, rtt_, tzero_, fsize_, bval_);
@@ -497,7 +503,7 @@ void SctpRateHybrid::update_rtt(double tao, double now){
 		rtt_ = now - tao;
 		sqrtrtt_ = sqrt(now - tao);
 	}
-	printf("ratehybrid rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
+	// printf("ratehybrid rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
 	rttcur_ = now - tao;
 }
 
@@ -608,7 +614,6 @@ void SctpRateHybrid::nextpkt(){
 
 	//DEQUEUE	
 	if(pktQ_.spHead == NULL){
-		// printf("%d %lf\n", size_, rate_);
 		timer_send->resched(size_/rate_);
 		// printf("sendtimer expired! time: %lf\n", Scheduler::instance().clock());
 		// getchar();
@@ -634,6 +639,7 @@ void SctpRateHybrid::nextpkt(){
 		       && (oldrate_+SMALLFLOAT< rate_)) {
 		oldrate_ = oldrate_ + delta_;
 		xrate = oldrate_;
+		// printf("ratehybrid xrate: %lf\n", xrate);
 	} else {
 		if (ca_) {
 			if (debug_) printf("SQRT: now: %5.2f factor: %5.2f\n", Scheduler::instance().clock(), sqrtrtt_/sqrt(rttcur_));
@@ -719,8 +725,9 @@ void SctpRateHybrid::slowstart ()
 		oldrate_ = rate_;
 		rate_ = size_/rtt_; 
 		delta_ = 0;
-        	last_change_=now;
+        last_change_=now;
 	}
+	// printf("ratehybrid rate: %lf\n", rate_);
 	if (debug_) printf("SlowStart: now: %5.2f rate: %5.2f delta: %5.2f\n", now, rate_, delta_);
 	if (printStatus_) {
 		double rate = rate_ * rtt_ / size_;

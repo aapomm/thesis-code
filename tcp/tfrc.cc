@@ -262,11 +262,12 @@ void TfrcAgent::nextpkt()
 		       && (oldrate_+SMALLFLOAT< rate_)) {
 		oldrate_ = oldrate_ + delta_;
 		xrate = oldrate_;
+		// printf("tfrc xrate: %lf\n", xrate);
 	} else {
 		if (ca_) {
 			if (debug_) printf("SQRT: now: %5.2f factor: %5.2f\n", Scheduler::instance().clock(), sqrtrtt_/sqrt(rttcur_));
-			printf("tfrc sqrtrtt: %lf, %lf, %lf\n", rate_, sqrtrtt_, rttcur_);
-			getchar();
+			// printf("tfrc sqrtrtt: %lf, %lf, %lf\n", rate_, sqrtrtt_, rttcur_);
+			// getchar();
 			xrate = rate_ * sqrtrtt_/sqrt(rttcur_);
 		} else
 			xrate = rate_;
@@ -322,7 +323,7 @@ void TfrcAgent::update_rtt (double tao, double now)
 		rtt_ = now - tao;
 		sqrtrtt_ = sqrt(now - tao);
 	}
-	printf("tfrc rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
+	// printf("tfrc rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
 	rttcur_ = now - tao;
 }
 
@@ -336,6 +337,7 @@ void TfrcAgent::recv(Packet *pkt, Handler *)
 	//double ts = nck->timestamp_echo;
 	double ts = nck->timestamp_echo + nck->timestamp_offset;
 	double rate_since_last_report = nck->rate_since_last_report;
+	// printf("tfrc rslr: %lf\n", rate_since_last_report);
 	// double NumFeedback_ = nck->NumFeedback_;
 	double flost = nck->flost; 
 	int losses = nck->losses;
@@ -366,6 +368,8 @@ void TfrcAgent::recv(Packet *pkt, Handler *)
 	}
 		
 	/* update the round trip time */
+	printf("tfrc ts: %lf\n", ts);
+	getchar();
 	update_rtt (ts, now);
 
 	/* .. and estimate of fair rate */
@@ -510,7 +514,7 @@ void TfrcAgent::slowstart ()
 		oldrate_ = rate_;
 		rate_ = size_/rtt_; 
 		delta_ = 0;
-        	last_change_=now;
+    	last_change_=now;
 	}
 	if (debug_) printf("SlowStart: now: %5.2f rate: %5.2f delta: %5.2f\n", now, rate_, delta_);
 	if (printStatus_) {

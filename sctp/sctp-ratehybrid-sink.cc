@@ -725,7 +725,7 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
   if (sendReport == true)
   { 
     opPacket = addTFRCHeaders(opPacket, p);
-    sendReport = false;
+    // sendReport = false;
   }
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
