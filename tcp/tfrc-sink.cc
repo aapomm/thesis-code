@@ -414,6 +414,7 @@ void TfrcSinkAgent::sendpkt(double p)
 		else
 			tfrc_ackh->flost = p;
 		tfrc_ackh->rate_since_last_report = est_thput ();
+		printf("tfrc-sink thput: %lf\n", est_thput());
 		tfrc_ackh->losses = losses_since_last_report;
 		if (total_received_ <= 0) 
 			tfrc_ackh->true_loss = 0.0;

@@ -1,6 +1,6 @@
 #ifndef lint
 static const char rcsid[] =
-"@(#) $Header: /cvsroot/nsnam/ns-2/sctp/sctp-ratehybrid.cc,v 1.5 2013/12/10 05:51:27 aaron_manaloto Exp $ (UD/PEL)";
+"@(#) $Header: /cvsroot/nsnam/ns-2/sctp/sctp-ratehybrid-sink.cc,v 1.5 2013/12/10 05:51:27 aaron_manaloto Exp $ (UD/PEL)";
 #endif
 
 #include "ip.h"

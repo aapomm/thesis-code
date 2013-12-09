@@ -35,6 +35,6 @@ $cbr0 set rate_ 5mb
 $cbr0 attach-agent $sctp0
 
 $ns at 1.0 "$cbr0 start"
-$ns at 6.0 "finish"
+$ns at 20.0 "finish"
 
 $ns run

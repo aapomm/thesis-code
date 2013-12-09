@@ -13,6 +13,7 @@ proc finish {} {
 	close $nd
 	#exec nam out.nam &
 	exit 0
+	
 }
 
 set source [$ns node]

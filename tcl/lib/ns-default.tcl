@@ -1661,7 +1661,7 @@ Agent/SCTP/Ratehybrid set useHeaders_ true ;	# Added on 2005/06/24.
 Agent/SCTP/Ratehybrid set idleFix_ true ;	# Added on 2006/03/12.
 
 
-Agent/SCTP/Ratehybrid set packetSize_ 40
+#Agent/SCTP/Ratehybrid set packetSize_ 40
 Agent/SCTP/Ratehybrid set InitHistorySize_ 100000
 Agent/SCTP/Ratehybrid set NumFeedback_ 1 
 Agent/SCTP/Ratehybrid set AdjustHistoryAfterSS_ 1
