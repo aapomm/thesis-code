@@ -1605,6 +1605,7 @@ Agent/SCTP/Ratehybrid set rtxcur_init_ 6.0
 Agent/SCTP/Ratehybrid set rttvar_exp_ 2	
 Agent/SCTP/Ratehybrid set T_SRTT_BITS 3	
 Agent/SCTP/Ratehybrid set T_RTTVAR_BITS 2	
+Agent/SCTP/Ratehybrid set df_ 0.95
 # VoIP mode:
 Agent/SCTP/Ratehybrid set voip_ 0 ;        # Added on 10/23/2004      
 				# 1 for voip mode.
@@ -1660,7 +1661,7 @@ Agent/SCTP/Ratehybrid set useHeaders_ true ;	# Added on 2005/06/24.
 Agent/SCTP/Ratehybrid set idleFix_ true ;	# Added on 2006/03/12.
 
 
-Agent/SCTP/Ratehybrid set packetSize_ 40
+#Agent/SCTP/Ratehybrid set packetSize_ 40
 Agent/SCTP/Ratehybrid set InitHistorySize_ 100000
 Agent/SCTP/Ratehybrid set NumFeedback_ 1 
 Agent/SCTP/Ratehybrid set AdjustHistoryAfterSS_ 1
