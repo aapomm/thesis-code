@@ -757,6 +757,12 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 	    spDest->opRouteCalcDelayTimer->sched(dRouteCalcDelay);
 	}
     }
+	if (rtt_ > 0.0 && NumFeedback_ > 0) 
+		nack_timer_.resched(1.5*rtt_/NumFeedback_);
+}
+
+void SctpRateHybridSinkNackTimer::expire(Event *){
+  printf("puta\n");
 }
 
 /*

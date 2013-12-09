@@ -62,7 +62,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
  	rate_ = 100000.0;
 	// delta_ = 0;
 	oldrate_ = rate_;  
-	// rate_change_ = SLOW_START;
+	rate_change_ = SLOW_START;
 	UrgentFlag = 1;
 	rtt_=0;	 
 	sqrtrtt_=1;
