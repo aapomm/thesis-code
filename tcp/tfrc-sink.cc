@@ -336,6 +336,7 @@ double TfrcSinkAgent::est_thput ()
 	double time_for_rcv_rate;
 	double now = Scheduler::instance().clock();
 	double thput = 1 ;
+  printf("rtt: %lf gagoooo~\n", rtt_);
 
 	if ((rtt_ > 0) && ((now - last_report_sent) >= rtt_)) {
 		// more than an RTT since the last report

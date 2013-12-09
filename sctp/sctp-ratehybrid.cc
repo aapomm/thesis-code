@@ -323,11 +323,14 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
 
  	eStartOfPacket = TRUE;
 
- 	do{
-     	iOutDataSize += ProcessChunk(ucpCurrInChunk, &ucpCurrOutData);
-     	NextChunk(&ucpCurrInChunk, &iRemainingDataLen);
+  if(hdr_sctp::access(opInPkt)->NumChunks() > 0)
+  {
+    do{
+      iOutDataSize += ProcessChunk(ucpCurrInChunk, &ucpCurrOutData);
+      NextChunk(&ucpCurrInChunk, &iRemainingDataLen);
     }
- 	while(ucpCurrInChunk != NULL);
+    while(ucpCurrInChunk != NULL);
+  }
 
  	if(iOutDataSize > 0) {
     	SendPacket(ucpOutData, iOutDataSize, spReplyDest);
@@ -394,6 +397,8 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	true_loss_rate_ = nck->true_loss;
 
 	round_id ++;
+  printf("PACKET TYPE: %d\n", hdr_sctp::access(pkt)->spSctpTrace->eType);
+  printf("Rate since last report: %lf\n", nck->rate_since_last_report);
 
 	if (round_id > 1 && rate_since_last_report > 0) {
 		/* compute the max rate for slow-start as two times rcv rate */ 
@@ -644,6 +649,7 @@ void SctpRateHybrid::slowstart ()
 		oldrate_ = rate_;
 		if (rate_ < initrate) rate_ = initrate;
 		delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
+    printf("condition1 \n");
 		last_change_=now;
 	} else if (ss_maxrate_ > 0) {
 		printf("SlowStart: Maxrate > 0\n");
@@ -654,6 +660,7 @@ void SctpRateHybrid::slowstart ()
 			oldrate_ = rate_;
 			if (rate_ < initrate) rate_ = initrate;
 			delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
+      printf("condition2 \n");
 			last_change_=now;
 		} else if (rate_ < ss_maxrate_ && 
 		                    now - last_change_ > rtt_) {
@@ -666,16 +673,19 @@ void SctpRateHybrid::slowstart ()
 			if (rate_ < size_/rtt_) 
 				rate_ = size_/rtt_; 
 			delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
+      printf("condition3 \n");
 			last_change_=now;
 		} else if (rate_ > ss_maxrate_) {
 			// Limited by maxrate.  
 			rate_ = oldrate_ = ss_maxrate_/2.0;
+      printf("condition4 \n");
 			delta_ = 0;
 			last_change_=now;
 		} 
 	} else {
 		// If we get here, ss_maxrate <= 0, so the receive rate is 0.
 		// We should go back to a very small sending rate!!!
+    printf("condition5 \n");
 		oldrate_ = rate_;
 		rate_ = size_/rtt_; 
 		delta_ = 0;

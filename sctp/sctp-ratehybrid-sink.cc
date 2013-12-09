@@ -3,8 +3,8 @@ static const char rcsid[] =
 "@(#) $Header: /cvsroot/nsnam/ns-2/sctp/sctp-ratehybrid.cc,v 1.5 2013/12/10 05:51:27 aaron_manaloto Exp $ (UD/PEL)";
 #endif
 
-#include "ip.h"
-#include "sctp-ratehybrid-sink.h"
+#include "ip.h" 
+#include "sctp-ratehybrid-sink.h" 
 #include "flags.h"
 
 #ifdef DMALLOC
@@ -269,6 +269,7 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 	/* for the time being, we will ignore out of order and duplicate 
 	   packets etc. */
   int seqno = tfrch->seqno ;
+  printf("seqno: %d\n", seqno);
 	fsize_ = tfrch->fsize;
 	int oldmaxseq = maxseq;
 	// if this is the highest packet yet, or an unknown packet
@@ -280,6 +281,7 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 		  UrgentFlag = tfrch->UrgentFlag;
 		  round_id = tfrch->round_id ;
 	    rtt_=tfrch->rtt;
+      printf("got new rtt!!!!!!!!!!\n");
 		  tzero_=tfrch->tzero;
 		  psize_=tfrch->psize;
 		  last_arrival_=now;
@@ -415,6 +417,7 @@ Packet* SctpRateHybridSink::addTFRCHeaders(Packet* pkt, double p)
 			tfrc_ackh->flost = est_loss (); 
 		else
 			tfrc_ackh->flost = p;
+    printf("SINK: EST_THPUT()\n");
 		tfrc_ackh->rate_since_last_report = est_thput ();
 		tfrc_ackh->losses = losses_since_last_report;
 		if (total_received_ <= 0) 
@@ -702,6 +705,7 @@ int SctpRateHybridSink::command(int argc, const char*const* argv)
 
 void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest)
 {
+  printf("PUTA AYAN MAGSESEND NA TANGINA\n");
   Node_S *spNewNode = NULL;
   Packet *opPacket = NULL;
   PacketData *opPacketData = NULL;
@@ -720,13 +724,10 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
   memcpy(hdr_sctp::access(opPacket)->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
-  uiNumChunks = 0; // reset the counter
+  printf("uiNumChunks: %d\n", uiNumChunks);
 
-  if (sendReport == true)
-  { 
     opPacket = addTFRCHeaders(opPacket, p);
     sendReport = false;
-  }
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
     {
@@ -757,8 +758,12 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 	    spDest->opRouteCalcDelayTimer->sched(dRouteCalcDelay);
 	}
     }
-	if (rtt_ > 0.0 && NumFeedback_ > 0) 
-		nack_timer_.resched(1.5*rtt_/NumFeedback_);
+  if(uiNumChunks == 0)
+  {
+    if (rtt_ > 0.0 && NumFeedback_ > 0) 
+      nack_timer_.resched(1.5*rtt_/NumFeedback_);
+  }
+  uiNumChunks = 0; // reset the counter
 }
 
 void SctpRateHybridSinkNackTimer::expire(Event *){
@@ -805,6 +810,8 @@ double SctpRateHybridSink::estimate_tstamp(int before, int after, int i)
 
 double SctpRateHybridSink::est_thput () 
 {
+  printf("est_thput gago~\n");
+  printf("rtt_: %lf gago~~", rtt_); 
 	double time_for_rcv_rate;
 	double now = Scheduler::instance().clock();
 	double thput = 1 ;
@@ -814,7 +821,10 @@ double SctpRateHybridSink::est_thput ()
 		time_for_rcv_rate = (now - last_report_sent);
 		if (rcvd_since_last_report > 0) {
 			thput = rcvd_since_last_report/time_for_rcv_rate;
+      printf("wew1\n");
 		}
+    else
+      printf("wew2\n");
 	}
 	else {
 		// count number of packets received in the last RTT
@@ -833,7 +843,9 @@ double SctpRateHybridSink::est_thput ()
 			}
 			if (rcvd > 0)
 				thput = rcvd/rtt_; 
+      printf("wew3\n");
 		}
+    printf("wew4\n");
 	}
 	return thput ;
 }
