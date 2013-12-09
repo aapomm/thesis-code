@@ -91,7 +91,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	printf("size_: %d, rate_: %lf, initrate_: %lf\n", size_, rate_, size_/rate_);
 	size_ = 1460;
 	timer_send->sched(size_/rate_);
-
+	sendData_ = 0;
 	printf("RATEHYBRID.\n");
 }
 
@@ -128,7 +128,7 @@ void SctpRateHybrid::SendMuch()
   double dCurrTime = Scheduler::instance().clock();
 
   u_int uiChunkSize = 0;
-
+  sendData_ = 1;
   while((spNewTxDest->iOutstandingBytes < spNewTxDest->iCwnd) &&
 	(eDataSource == DATA_SOURCE_INFINITE || sAppLayerBuffer.uiLength != 0))
     {
@@ -193,7 +193,7 @@ void SctpRateHybrid::SendMuch()
    * measurement is carried over from RtxMarkedChunks() if it was called.
    */
   uiBurstLength = 0;
-
+  sendData_ = 0;
   delete [] ucpOutData;
 }
 
@@ -227,7 +227,7 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
 	sctph->fsize=fsize_;
 	sctph->UrgentFlag=UrgentFlag;
 	sctph->round_id=round_id;
-
+	if (sendData_) sctph->contains_data = 1;
   uiNumChunks = 0; // reset the counter
 
 // printf("time: %lf\n", Scheduler::instance().clock());
@@ -371,7 +371,10 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
      	eSendNewDataChunks = FALSE; // reset AFTER sent (o/w breaks dependencies)
     }
 
-    TFRC_update(opInPkt);
+    if (hdr_sctp::access(opInPkt)->tfrc_feedback) {
+    	TFRC_update(opInPkt);
+    }
+    
 
 	//FREE PACKET
  	delete hdr_sctp::access(opInPkt)->SctpTrace();

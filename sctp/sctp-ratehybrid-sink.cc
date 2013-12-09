@@ -133,8 +133,12 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   eStartOfPacket = TRUE;
 
+  printf("uid_: %d\t data: %d\n", hdr_cmn::access(opInPkt)->uid_, hdr_sctp::access(opInPkt)->contains_data);
+
   // compute TFRC response
-  processTFRCResponse(opInPkt);
+  if (hdr_sctp::access(opInPkt)->contains_data == 1) {
+  	processTFRCResponse(opInPkt);
+  }
   do
     {
       //DBG_PL(recv, "iRemainingDataLen=%d"), iRemainingDataLen DBG_PR;
@@ -233,6 +237,7 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
   hdr_sctp* tfrch = hdr_sctp::access(pkt);
 	hdr_flags* hf = hdr_flags::access(pkt);
 	double now = Scheduler::instance().clock();
+  data = true;
 	double p = -1;
 	int ecnEvent = 0;
 	int congestionEvent = 0;
@@ -245,7 +250,6 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 	total_received_ ++;
 	// bytes_ was added by Tom Phelan, for reporting bytes received.
 	bytes_ += hdr_cmn::access(pkt)->size();
-
 	if (maxseq < 0) {
 		// This is the first data packet.
     maxseq = tfrch->seqno - 1 ;
@@ -715,6 +719,11 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 
   opPacket = allocpkt();
   opPacketData = new PacketData(iDataSize);
+  if(data)
+  {
+    hdr_sctp::access(opPacket)->tfrc_feedback = 1;
+    data = false;
+  }
   memcpy(opPacketData->data(), ucpData, iDataSize);
   opPacket->setdata(opPacketData);
   hdr_cmn::access(opPacket)->size() = iDataSize + SCTP_HDR_SIZE+uiIpHeaderSize;

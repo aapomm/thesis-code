@@ -124,6 +124,7 @@ protected:
 	int printStatus_;
 	int idleFix_;
 	double ssmult_;	
+	int sendData_; // are we sending data right now?
 	/* end of TFRC integration variables
 	*/
 
