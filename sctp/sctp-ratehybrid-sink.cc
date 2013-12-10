@@ -133,7 +133,6 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   eStartOfPacket = TRUE;
 
-  printf("uid_: %d\t data: %d\n", hdr_cmn::access(opInPkt)->uid_, hdr_sctp::access(opInPkt)->contains_data);
 
   // compute TFRC response
   if (hdr_sctp::access(opInPkt)->contains_data == 1) {
@@ -234,11 +233,11 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
 void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 {
-  hdr_sctp* tfrch = hdr_sctp::access(pkt);
+  	hdr_sctp* tfrch = hdr_sctp::access(pkt);
 	hdr_flags* hf = hdr_flags::access(pkt);
 	double now = Scheduler::instance().clock();
-  data = true;
-	double p = -1;
+  	data = true;
+	p = -1;
 	int ecnEvent = 0;
 	int congestionEvent = 0;
 	int UrgentFlag = 0;	// send loss report immediately
@@ -273,7 +272,6 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 	/* for the time being, we will ignore out of order and duplicate 
 	   packets etc. */
   int seqno = tfrch->seqno ;
-  printf("seqno: %d\n", seqno);
 	fsize_ = tfrch->fsize;
 	int oldmaxseq = maxseq;
 	// if this is the highest packet yet, or an unknown packet
@@ -285,7 +283,6 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 		  UrgentFlag = tfrch->UrgentFlag;
 		  round_id = tfrch->round_id ;
 	    rtt_=tfrch->rtt;
-      printf("got new rtt!!!!!!!!!!\n");
 		  tzero_=tfrch->tzero;
 		  psize_=tfrch->psize;
 		  last_arrival_=now;
@@ -421,7 +418,6 @@ Packet* SctpRateHybridSink::addTFRCHeaders(Packet* pkt, double p)
 			tfrc_ackh->flost = est_loss (); 
 		else
 			tfrc_ackh->flost = p;
-    printf("SINK: EST_THPUT()\n");
 		tfrc_ackh->rate_since_last_report = est_thput ();
 		tfrc_ackh->losses = losses_since_last_report;
 		if (total_received_ <= 0) 
@@ -514,7 +510,7 @@ double SctpRateHybridSink::b_to_p(double b, double rtt, double tzero, int psize,
 
 int SctpRateHybridSink::command(int argc, const char*const* argv)
 {
-  double dCurrTime = Scheduler::instance().clock();
+  // double dCurrTime = Scheduler::instance().clock();
 
   Tcl& oTcl = Tcl::instance();
   Node *opNode = NULL;
@@ -709,7 +705,6 @@ int SctpRateHybridSink::command(int argc, const char*const* argv)
 
 void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDest)
 {
-  printf("PUTA AYAN MAGSESEND NA TANGINA\n");
   Node_S *spNewNode = NULL;
   Packet *opPacket = NULL;
   PacketData *opPacketData = NULL;
@@ -733,7 +728,6 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
   memcpy(hdr_sctp::access(opPacket)->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
-  printf("uiNumChunks: %d\n", uiNumChunks);
 
   if(sendReport || uiNumChunks == 0)
   {
@@ -822,8 +816,6 @@ double SctpRateHybridSink::estimate_tstamp(int before, int after, int i)
 
 double SctpRateHybridSink::est_thput () 
 {
-  printf("est_thput gago~\n");
-  printf("rtt_: %lf gago~~", rtt_); 
 	double time_for_rcv_rate;
 	double now = Scheduler::instance().clock();
 	double thput = 1 ;
@@ -833,10 +825,7 @@ double SctpRateHybridSink::est_thput ()
 		time_for_rcv_rate = (now - last_report_sent);
 		if (rcvd_since_last_report > 0) {
 			thput = rcvd_since_last_report/time_for_rcv_rate;
-      printf("wew1\n");
 		}
-    else
-      printf("wew2\n");
 	}
 	else {
 		// count number of packets received in the last RTT
@@ -855,9 +844,7 @@ double SctpRateHybridSink::est_thput ()
 			}
 			if (rcvd > 0)
 				thput = rcvd/rtt_; 
-      printf("wew3\n");
 		}
-    printf("wew4\n");
 	}
 	return thput ;
 }

@@ -53,6 +53,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	bind("fsize_", &fsize_);
 	bind("overhead_", &overhead_);
 	bind_bool("slow_increase_", &slow_increase_);
+	bind_bool("idleFix_", &idleFix_);
 
 	// printf("isHEADEMPTY? %d\n", pktQ_.spHead == NULL);
 	// printf("isTAILEMPTY? %d\n", pktQ_.spTail == NULL);
@@ -71,7 +72,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	sqrtrtt_=1;
 	rttcur_=1;
 	tzero_ = 0;
-	// last_change_=0;	
+	last_change_=0;	
 	maxrate_ = 0; 
 	ss_maxrate_ = 0;
 	// ndatapack_=0;
@@ -79,7 +80,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	true_loss_rate_ = 0;
 	// active_ = 1; 
 	round_id = 0;
-	// heavyrounds_ = 0;
+	heavyrounds_ = 0;
 	t_srtt_ = int(srtt_init_/tcp_tick_) << T_SRTT_BITS;
 	t_rttvar_ = int(rttvar_init_/tcp_tick_) << T_RTTVAR_BITS;
 	t_rtxcur_ = rtxcur_init_;
@@ -95,7 +96,6 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	size_ = 1460;
 	timer_send->sched(size_/rate_);
 	sendData_ = 0;
-	printf("RATEHYBRID.\n");
 }
 
 SctpRateHybrid::~SctpRateHybrid(){
@@ -406,8 +406,6 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 	true_loss_rate_ = nck->true_loss;
 
 	round_id ++;
-  printf("PACKET TYPE: %d\n", hdr_sctp::access(pkt)->spSctpTrace->eType);
-  printf("Rate since last report: %lf\n", nck->rate_since_last_report);
 
 	if (round_id > 1 && rate_since_last_report > 0) {
 		/* compute the max rate for slow-start as two times rcv rate */ 
@@ -485,7 +483,6 @@ void SctpRateHybrid::TFRC_update(Packet *pkt){
 
 void SctpRateHybrid::update_rtt(double tao, double now){
 
-  printf("update rtt!!!!!\n");
 	t_rtt_ = int((now-tao) /tcp_tick_ + 0.5);
 	if (t_rtt_==0) t_rtt_=1;
 	if (t_srtt_ != 0) {
@@ -703,7 +700,6 @@ void SctpRateHybrid::slowstart ()
 		oldrate_ = rate_;
 		if (rate_ < initrate) rate_ = initrate;
 		delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
-    printf("condition1 \n");
 		last_change_=now;
 	} else if (ss_maxrate_ > 0) {
 		// printf("SlowStart: Maxrate > 0\n");
@@ -715,7 +711,6 @@ void SctpRateHybrid::slowstart ()
 			oldrate_ = rate_;
 			if (rate_ < initrate) rate_ = initrate;
 			delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
-      printf("condition2 \n");
 			last_change_=now;
 		} else if (rate_ < ss_maxrate_ && 
 		                    now - last_change_ > rtt_) {
@@ -728,15 +723,12 @@ void SctpRateHybrid::slowstart ()
 			if (rate_ < size_/rtt_) 
 				rate_ = size_/rtt_; 
 			delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
-      printf("condition3 \n");
 			last_change_=now;
 		} else if (rate_ > ss_maxrate_) {
 			// Limited by maxrate.  
 			rate_ = oldrate_ = ss_maxrate_/2.0;
-      printf("condition4 \n");
 			delta_ = 0;
 			last_change_=now;
-			printf("PASS?\n");
 		} 
 	} else {
 		// If we get here, ss_maxrate <= 0, so the receive rate is 0.
