@@ -221,8 +221,6 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   memcpy(sctph->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
-	sctph->timestamp=Scheduler::instance().clock();
-	sctph->rtt=rtt_;
 	sctph->tzero=tzero_;
 	sctph->rate=rate_;
 	sctph->psize=size_;
@@ -641,6 +639,7 @@ void SctpRateHybrid::nextpkt(){
 	}
 
 	hdr_sctp::access((Packet *)(node->vpData))->timestamp = Scheduler::instance().clock();
+	hdr_sctp::access((Packet *)(node->vpData))->rtt=rtt_;
 	send((Packet *)(node->vpData),0);
 	// If slow_increase_ is set, then during slow start, we increase rate
 	// slowly - by amount delta per packet 
