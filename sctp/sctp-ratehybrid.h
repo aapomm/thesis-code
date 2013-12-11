@@ -2,8 +2,10 @@
 #define sctp_rate_hybrid_h
 
 #include "sctp.h"
+#include "random.h"
 
 #define SEND_RATE 0.001
+#define SMALLFLOAT 0.0000001
 
 /* modes of rate change for TFRC */
 #define SLOW_START 1
@@ -118,12 +120,16 @@ protected:
 				//   arrives after a data-limited period
 
 	int UrgentFlag;		// urgent flag
+	double overhead_;
 	SctpTfrcNoFeedbackTimer NoFeedbacktimer_;
 
 	double delta_;
 	int printStatus_;
 	int idleFix_;
 	double ssmult_;	
+	int sendData_; // are we sending data right now?
+	int slow_increase_;
+	int ca_;
 	/* end of TFRC integration variables
 	*/
 

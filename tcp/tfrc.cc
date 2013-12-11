@@ -258,13 +258,17 @@ void TfrcAgent::nextpkt()
 	
 	// If slow_increase_ is set, then during slow start, we increase rate
 	// slowly - by amount delta per packet 
+	// printf("tfrc values: %d, %d, %d, %lf, %lf\n", slow_increase_, round_id, rate_change_, oldrate_, rate_);
 	if (slow_increase_ && round_id > 2 && (rate_change_ == SLOW_START) 
 		       && (oldrate_+SMALLFLOAT< rate_)) {
 		oldrate_ = oldrate_ + delta_;
 		xrate = oldrate_;
+		// printf("tfrc xrate: %lf\n", xrate);
 	} else {
 		if (ca_) {
 			if (debug_) printf("SQRT: now: %5.2f factor: %5.2f\n", Scheduler::instance().clock(), sqrtrtt_/sqrt(rttcur_));
+			// printf("tfrc sqrtrtt: %lf, %lf, %lf\n", rate_, sqrtrtt_, rttcur_);
+			// getchar();
 			xrate = rate_ * sqrtrtt_/sqrt(rttcur_);
 		} else
 			xrate = rate_;
@@ -279,6 +283,7 @@ void TfrcAgent::nextpkt()
 		//
 		// randomize between next*(1 +/- woverhead_) 
 		//
+		// printf("tfrc next: %d, %lf, %lf\n", size_, xrate, next);
 		next = next*(2*overhead_*Random::uniform()-overhead_+1);
 		if (next > SMALLFLOAT)
 			send_timer_.resched(next);
@@ -319,6 +324,7 @@ void TfrcAgent::update_rtt (double tao, double now)
 		rtt_ = now - tao;
 		sqrtrtt_ = sqrt(now - tao);
 	}
+	// printf("tfrc rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
 	rttcur_ = now - tao;
 }
 
@@ -332,6 +338,7 @@ void TfrcAgent::recv(Packet *pkt, Handler *)
 	//double ts = nck->timestamp_echo;
 	double ts = nck->timestamp_echo + nck->timestamp_offset;
 	double rate_since_last_report = nck->rate_since_last_report;
+	// printf("tfrc rslr: %lf\n", rate_since_last_report);
 	// double NumFeedback_ = nck->NumFeedback_;
 	double flost = nck->flost; 
 	int losses = nck->losses;
@@ -343,6 +350,7 @@ void TfrcAgent::recv(Packet *pkt, Handler *)
 	if (round_id > 1 && rate_since_last_report > 0) {
 		/* compute the max rate for slow-start as two times rcv rate */ 
 		ss_maxrate_ = 2*rate_since_last_report*size_;
+		// printf("tfrc ss_maxrate_: %lf\n", ss_maxrate_);
 		if (conservative_) { 
 			if (losses >= 1) {
 				/* there was a loss in the most recent RTT */
@@ -362,6 +370,8 @@ void TfrcAgent::recv(Packet *pkt, Handler *)
 	}
 		
 	/* update the round trip time */
+	// printf("tfrc ts: %lf\n", ts);
+	// getchar();
 	update_rtt (ts, now);
 
 	/* .. and estimate of fair rate */
@@ -468,7 +478,7 @@ void TfrcAgent::slowstart ()
 	if (debug_) printf("SlowStart: round_id: %d rate: %5.2f ss_maxrate_: %5.2f\n", round_id, rate_, ss_maxrate_);
 	if (round_id <=1 || (round_id == 2 && initial_rate() > 1)) {
 		// We don't have a good rate report yet, so keep to  
-		//   the initial rate.				     
+		//   the initial rate.
 		oldrate_ = rate_;
 		if (rate_ < initrate) rate_ = initrate;
 		delta_ = (rate_ - oldrate_)/(rate_*rtt_/size_);
@@ -506,13 +516,15 @@ void TfrcAgent::slowstart ()
 		oldrate_ = rate_;
 		rate_ = size_/rtt_; 
 		delta_ = 0;
-        	last_change_=now;
+    	last_change_=now;
 	}
 	if (debug_) printf("SlowStart: now: %5.2f rate: %5.2f delta: %5.2f\n", now, rate_, delta_);
 	if (printStatus_) {
 		double rate = rate_ * rtt_ / size_;
 	  	printf("SlowStart: now: %5.2f rate: %5.2f ss_maxrate: %5.2f delta: %5.2f\n", now, rate, ss_maxrate_, delta_);
 	}
+	// printf("tfrc rate: %lf\n", rate_);
+	// getchar();
 }
 
 void TfrcAgent::increase_rate (double )

@@ -1,10 +1,10 @@
 #ifndef lint
 static const char rcsid[] =
-"@(#) $Header: /cvsroot/nsnam/ns-2/sctp/sctp-ratehybrid.cc,v 1.5 2013/12/10 05:51:27 aaron_manaloto Exp $ (UD/PEL)";
+"@(#) $Header: /cvsroot/nsnam/ns-2/sctp/sctp-ratehybrid-sink.cc,v 1.5 2013/12/10 05:51:27 aaron_manaloto Exp $ (UD/PEL)";
 #endif
 
-#include "ip.h"
-#include "sctp-ratehybrid-sink.h"
+#include "ip.h" 
+#include "sctp-ratehybrid-sink.h" 
 #include "flags.h"
 
 #ifdef DMALLOC
@@ -133,8 +133,11 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   eStartOfPacket = TRUE;
 
+
   // compute TFRC response
-  processTFRCResponse(opInPkt);
+  if (hdr_sctp::access(opInPkt)->contains_data == 1) {
+  	processTFRCResponse(opInPkt);
+  }
   do
     {
       //DBG_PL(recv, "iRemainingDataLen=%d"), iRemainingDataLen DBG_PR;
@@ -230,10 +233,11 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
 void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 {
-  hdr_sctp* tfrch = hdr_sctp::access(pkt);
+  	hdr_sctp* tfrch = hdr_sctp::access(pkt);
 	hdr_flags* hf = hdr_flags::access(pkt);
 	double now = Scheduler::instance().clock();
-	double p = -1;
+  	data = true;
+	p = -1;
 	int ecnEvent = 0;
 	int congestionEvent = 0;
 	int UrgentFlag = 0;	// send loss report immediately
@@ -245,7 +249,6 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 	total_received_ ++;
 	// bytes_ was added by Tom Phelan, for reporting bytes received.
 	bytes_ += hdr_cmn::access(pkt)->size();
-
 	if (maxseq < 0) {
 		// This is the first data packet.
     maxseq = tfrch->seqno - 1 ;
@@ -507,7 +510,7 @@ double SctpRateHybridSink::b_to_p(double b, double rtt, double tzero, int psize,
 
 int SctpRateHybridSink::command(int argc, const char*const* argv)
 {
-  double dCurrTime = Scheduler::instance().clock();
+  // double dCurrTime = Scheduler::instance().clock();
 
   Tcl& oTcl = Tcl::instance();
   Node *opNode = NULL;
@@ -711,6 +714,11 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 
   opPacket = allocpkt();
   opPacketData = new PacketData(iDataSize);
+  if(data)
+  {
+    hdr_sctp::access(opPacket)->tfrc_feedback = 1;
+    data = false;
+  }
   memcpy(opPacketData->data(), ucpData, iDataSize);
   opPacket->setdata(opPacketData);
   hdr_cmn::access(opPacket)->size() = iDataSize + SCTP_HDR_SIZE+uiIpHeaderSize;
@@ -720,12 +728,11 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
   memcpy(hdr_sctp::access(opPacket)->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
-  uiNumChunks = 0; // reset the counter
 
-  if (sendReport == true)
-  { 
+  if(sendReport || uiNumChunks == 0)
+  {
     opPacket = addTFRCHeaders(opPacket, p);
-    sendReport = false;
+    // sendReport = false;
   }
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
@@ -757,6 +764,17 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 	    spDest->opRouteCalcDelayTimer->sched(dRouteCalcDelay);
 	}
     }
+  if(uiNumChunks == 0)
+  {
+    if (rtt_ > 0.0 && NumFeedback_ > 0) 
+      nack_timer_.resched(1.5*rtt_/NumFeedback_);
+  }
+  uiNumChunks = 0; // reset the counter
+}
+
+void SctpRateHybridSinkNackTimer::expire(Event *){
+  a_->p = -1;
+  a_->SendPacket(NULL, 0, a_->spReplyDest);
 }
 
 /*

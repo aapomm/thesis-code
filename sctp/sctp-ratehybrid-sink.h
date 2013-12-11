@@ -37,9 +37,9 @@ protected:
 	List_S pktQ_;
 };
 
-class TfrcNackTimer : public TimerHandler {
+class SctpRateHybridSinkNackTimer : public TimerHandler {
 public:
-	TfrcNackTimer(SctpRateHybridSink *a) : TimerHandler() { 
+  SctpRateHybridSinkNackTimer(SctpRateHybridSink *a) : TimerHandler() { 
 		a_ = a; 
 	}
 	virtual void expire(Event *e);
@@ -48,7 +48,7 @@ protected:
 };
 
 class SctpRateHybridSink : public SctpAgent {
-	friend class TfrcNackTimer;
+	friend class SctpRateHybridSinkNackTimer;
 
 protected:
   virtual void  delay_bind_init_all();
@@ -85,9 +85,10 @@ protected:
 
 	//common variables
 
-	TfrcNackTimer nack_timer_;
+	SctpRateHybridSinkNackTimer nack_timer_;
 
   bool sendReport = false; // send report????
+  bool data = false;
 
 	int psize_;		// size of received packet
 	int fsize_;		// size of large TCP packet, for VoIP mode.

@@ -6,7 +6,7 @@ BEGIN {
   total_size2 = 0;
   total_size3 = 0;
   throughput = 0;
-  interval = 0.25;
+  interval = 0.1;
   current_time_instance = 0;
   nxt_time_instance = current_time_instance + interval;
 }
@@ -47,7 +47,8 @@ BEGIN {
     current_time_instance = nxt_time_instance;
     nxt_time_instance += interval;
     #printf("%lf %lf\n", current_time_instance, (total_size1*8)/(interval*1000000));
-    printf("%d %f\n", bytes_recvd1, (total_size1*8)/(interval*1000000));
+    printf("%lf %lf\n", current_time_instance, (total_size1*8)/(interval*1000000));
+    #printf("%d %f\n", bytes_recvd1, (total_size1*8)/(interval*1000000));
     total_size1 = 0;
   }
 }
