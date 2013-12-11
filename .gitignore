@@ -4,6 +4,7 @@
 *.txt
 *.tr
 *.tar.gz
+*.nam
 Makefile
 autoconf.h
 common/ptypes2tcl
