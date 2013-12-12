@@ -95,6 +95,9 @@ protected:
 	double rtxcur_init_;
 	/* End of TCP variables for tracking RTT */
 
+	double firstSend;
+	bool noRtt;
+
 	/* "accurate" estimates for formula */
 	double rtt_; /*EWMA version*/
 	double rttcur_; /*Instantaneous version*/
