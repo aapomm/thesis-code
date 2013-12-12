@@ -96,6 +96,8 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	size_ = 1460;
 	timer_send->sched(size_/rate_);
 	sendData_ = 0;
+	firstSend = 0;
+	noRtt = true;
 }
 
 SctpRateHybrid::~SctpRateHybrid(){
@@ -325,6 +327,11 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
  	spReplyDest = GetReplyDestination(spIpHdr);
 
  	eStartOfPacket = TRUE;
+
+ 	if (noRtt) {
+ 		rtt_ = Scheduler::instance().clock() - firstSend;
+ 		noRtt = false;
+ 	}
 
   if(hdr_sctp::access(opInPkt)->NumChunks() > 0)
   {
@@ -868,6 +875,7 @@ void SctpRateHybrid::sendmsg(int iNumBytes, const char *cpFlags)
        * sctp so that our tracing output comes out correctly for scripts, etc
        */
       set_pkttype(PT_SCTP); 
+      firstSend = Scheduler::instance().clock();
       iOutDataSize = GenChunk(SCTP_CHUNK_INIT, ucpOutData);
       opT1InitTimer->resched(spPrimaryDest->dRto);
       eState = SCTP_STATE_COOKIE_WAIT;
