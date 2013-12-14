@@ -233,10 +233,10 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
 void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 {
-  	hdr_sctp* tfrch = hdr_sctp::access(pkt);
+  hdr_sctp* tfrch = hdr_sctp::access(pkt);
 	hdr_flags* hf = hdr_flags::access(pkt);
 	double now = Scheduler::instance().clock();
-  	data = true;
+  data = true;
 	p = -1;
 	int ecnEvent = 0;
 	int congestionEvent = 0;
@@ -280,13 +280,13 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 	  (seqno > maxseqList && lossvec_[seqno%hsz] == UNKNOWN )) {
 		if (seqno > maxseqList + 1)
 			++ numPktsSoFar_;
-		  UrgentFlag = tfrch->UrgentFlag;
-		  round_id = tfrch->round_id ;
-	    rtt_=tfrch->rtt;
-		  tzero_=tfrch->tzero;
-		  psize_=tfrch->psize;
-		  last_arrival_=now;
-		  last_timestamp_=tfrch->timestamp;
+		UrgentFlag = tfrch->UrgentFlag;
+		round_id = tfrch->round_id ;
+	  rtt_=tfrch->rtt;
+		tzero_=tfrch->tzero;
+		psize_=tfrch->psize;
+		last_arrival_=now;
+		last_timestamp_=tfrch->timestamp;
 		rtvec_[seqno%hsz]=now;	
 		tsvec_[seqno%hsz]=last_timestamp_;	
 		if (hf->ect() == 1 && hf->ce() == 1) {
