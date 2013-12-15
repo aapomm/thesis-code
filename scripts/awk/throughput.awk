@@ -6,7 +6,7 @@ BEGIN {
   total_size2 = 0;
   total_size3 = 0;
   throughput = 0;
-  interval = 0.1;
+  interval = 0.25;
   current_time_instance = 0;
   nxt_time_instance = current_time_instance + interval;
 }
