@@ -54,7 +54,7 @@ $ns duplex-link $udp1_n $int1_n 100Mb 25ms DropTail
 $ns duplex-link $tcp1_n $int1_n 100Mb 25ms DropTail
 
 $ns duplex-link $int0_n $int1_n 100Mb 25ms DropTail
-$ns queue-limit $int0_n $int1_n 4
+# $ns queue-limit $int0_n $int1_n 4
 # $ns duplex-link-op $int0_n $int1_n queuePos 0.5
 
 set sctp0 [new Agent/TFRC]
