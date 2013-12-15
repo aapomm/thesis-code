@@ -53,7 +53,7 @@ $ns duplex-link $sctp1_n $int1_n 100Mb 25ms DropTail
 $ns duplex-link $udp1_n $int1_n 100Mb 25ms DropTail
 $ns duplex-link $tcp1_n $int1_n 100Mb 25ms DropTail
 
-$ns duplex-link $int0_n $int1_n 5Mb 25ms DropTail
+$ns duplex-link $int0_n $int1_n 100Mb 25ms DropTail
 $ns queue-limit $int0_n $int1_n 4
 # $ns duplex-link-op $int0_n $int1_n queuePos 0.5
 
@@ -105,7 +105,7 @@ $ns at 7.5 "$tcp_traf stop"
 $ns at 7.5 "$udp_traf stop"
 $ns at 7.5 "$sctp_traf stop"
 
-$ns at 20.5 "finish"
+$ns at 7.5 "finish"
 
 puts "cbr rate: [$sctp_traf set interval_]"
 
