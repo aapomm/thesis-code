@@ -382,6 +382,14 @@ struct SctpHeartbeatChunk_S
 };
 typedef SctpHeartbeatChunk_S SctpHeartbeatAckChunk_S;
 
+struct SctpTfrcChunk_S
+{
+  SctpChunkHdr_S sHdr;
+  int seqno;
+  double timestamp;
+  double rtt;
+};
+
 /* SCTP state defines for internal state machine */
 enum SctpState_E
 {
