@@ -375,11 +375,6 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
      	eSendNewDataChunks = FALSE; // reset AFTER sent (o/w breaks dependencies)
     }
 
-    if (hdr_sctp::access(opInPkt)->tfrc_feedback) {
-    	TFRC_update(opInPkt);
-    }
-    
-
 	//FREE PACKET
  	delete hdr_sctp::access(opInPkt)->SctpTrace();
  	hdr_sctp::access(opInPkt)->SctpTrace() = NULL;
@@ -388,13 +383,13 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
  	delete [] ucpOutData;
 }
 
-void SctpRateHybrid::TFRC_update(Packet *pkt){
+void SctpRateHybrid::TFRC_update(u_char *ucpInChunk){
     /* 
    		TFRC INTEGRATION
     */
 	double now = Scheduler::instance().clock();
 	//Extract SCTP headers for TFRC calculation
-	hdr_sctp *nck = hdr_sctp::access(pkt);
+	SctpTfrcAckChunk_S *nck = (SctpTfrcAckChunk_S *) ucpInChunk;
 	//double ts = nck->timestamp_echo;
 	double ts = nck->timestamp_echo + nck->timestamp_offset;
 	double rate_since_last_report = nck->rate_since_last_report;
@@ -944,3 +939,12 @@ int SctpRateHybrid::BundleControlChunks(u_char *ucpOutData)
   return spTfrcChunk->sHdr.usLength;
 }
 
+void SctpRateHybrid::ProcessOptionChunk(u_char *ucpInChunk)
+{
+	switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
+	{
+		case SCTP_CHUNK_TFRC_ACK:
+		  TFRC_update(ucpInChunk);	
+			break;
+	}
+}

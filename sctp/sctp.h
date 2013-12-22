@@ -404,6 +404,11 @@ struct SctpTfrcAckChunk_S
   double timestamp_echo;
   double flost;
   double rate_since_last_report;
+	int losses;
+	double NumFeedback_;
+	double true_loss;
+	int seqno;
+	double timestamp;
 };
 
 /* SCTP state defines for internal state machine */
