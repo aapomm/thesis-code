@@ -66,7 +66,8 @@ protected:
 	int new_loss(int i, double tstamp);
 	double estimate_tstamp(int before, int after, int i);
 	virtual void  processTFRCResponse(u_char *ucpInChunk);
-  Packet* addTFRCHeaders(Packet*, double);
+  SctpTfrcAckChunk_S* createTfrcAckChunk(u_char *, double);
+	int BundleControlChunks(u_char *);
   void SendPacket(u_char*, int, SctpDest_S*);
 	void ProcessOptionChunk(u_char*);
 	

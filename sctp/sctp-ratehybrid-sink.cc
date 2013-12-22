@@ -384,7 +384,7 @@ void SctpRateHybridSink::processTFRCResponse(u_char *ucpInChunk)
 /*
  * Create report message, and send it.
  */
-Packet* SctpRateHybridSink::addTFRCHeaders(Packet* pkt, double p)
+SctpTfrcAckChunk_S* SctpRateHybridSink::createTfrcAckChunk(u_char *ucpOutData, double p)
 {
 	double now = Scheduler::instance().clock();
 
@@ -398,36 +398,29 @@ Packet* SctpRateHybridSink::addTFRCHeaders(Packet* pkt, double p)
 
 	if (last_arrival_ >= last_report_sent) {
 
-		if (pkt == NULL) {
-			printf ("error allocating packet\n");
-			abort(); 
-		}
+		SctpTfrcAckChunk_S *tfrc_ackh = (SctpTfrcAckChunk_S *) ucpOutData; 
 	
-		hdr_sctp *tfrc_ackh = hdr_sctp::access(pkt);
-	
-		tfrc_ackh->seqno=maxseq;
+		//tfrc_ackh->seqno=maxseq;
 		tfrc_ackh->timestamp_echo=last_timestamp_;
 		tfrc_ackh->timestamp_offset=now-last_arrival_;
-		tfrc_ackh->timestamp=now;
-		tfrc_ackh->NumFeedback_ = NumFeedback_;
+		//tfrc_ackh->timestamp=now;
+		//tfrc_ackh->NumFeedback_ = NumFeedback_;
 		if (p < 0) 
 			tfrc_ackh->flost = est_loss (); 
 		else
 			tfrc_ackh->flost = p;
 		tfrc_ackh->rate_since_last_report = est_thput ();
-		tfrc_ackh->losses = losses_since_last_report;
-		if (total_received_ <= 0) 
-			tfrc_ackh->true_loss = 0.0;
-		else 
-			tfrc_ackh->true_loss = 1.0 * 
-			    total_losses_/(total_received_+total_dropped_);
+		//tfrc_ackh->losses = losses_since_last_report;
+		//if (total_received_ <= 0) 
+		//	tfrc_ackh->true_loss = 0.0;
+		//else 
+		//	tfrc_ackh->true_loss = 1.0 * 
+		//	    total_losses_/(total_received_+total_dropped_);
 		last_report_sent = now; 
 		rcvd_since_last_report = 0;
 		losses_since_last_report = 0;
-    return pkt;
+		return tfrc_ackh;
 	}
-
-	return NULL;
 }
 /*
  * This takes as input the packet drop rate, and outputs the sending 
@@ -725,11 +718,6 @@ void SctpRateHybridSink::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
 
-  if(sendReport || uiNumChunks == 0)
-  {
-    opPacket = addTFRCHeaders(opPacket, p);
-    sendReport = false;
-  }
 
   if(dRouteCalcDelay == 0) // simulating reactive routing overheads?
     {
@@ -1281,13 +1269,20 @@ void SctpRateHybridSink::ProcessOptionChunk(u_char *ucpInChunk)
 	}
 }
 
-/*int SctpRateHybridSink::BundleControlChunks(u_char *ucpOutData)
+int SctpRateHybridSink::BundleControlChunks(u_char *ucpOutData)
 {
-	SctpTfrcAckChunk_S *spTfrcAckChunk = (SctpTfrcAckChunk_S *) ucpOutData;
+  if(sendReport || uiNumChunks == 0)
+  {
+  	SctpTfrcAckChunk_S *spTfrcAckChunk = (SctpTfrcAckChunk_S *) ucpOutData;
 
-	spTfrcAckChunk->sHdr.ucType = SCTP_CHUNK_TFRC_ACK;
-	spTfrcChunk->sHdr.usLength = sizeof(SctpTfrcAckChunk_S);*/
+		spTfrcAckChunk->sHdr.ucType = SCTP_CHUNK_TFRC_ACK;
+		spTfrcAckChunk->sHdr.usLength = sizeof(SctpTfrcAckChunk_S);
 
-	/*assign values */
+		/*assign values */
+		spTfrcAckChunk = createTfrcAckChunk(ucpOutData, p);
+    sendReport = false;
 
-//}
+		return spTfrcAckChunk->sHdr.usLength;
+  }
+	return 0;
+}
