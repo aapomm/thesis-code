@@ -921,8 +921,12 @@ int SctpRateHybrid::BundleControlChunks(u_char *ucpOutData)
 {
   SctpTfrcChunk_S *spTfrcChunk = (SctpTfrcChunk_S *) ucpOutData;
 
-	spTfrcChunk->seqno = seqno_++;
+	spTfrcChunk->sHdr.ucType = SCTP_CHUNK_TFRC;
+	spTfrcChunk->sHdr.usLength = sizeof(SctpTfrcChunk_S);
+	spTfrcChunk->seqno = 0;
+	spTfrcChunk->timestamp = 0;
+	spTfrcChunk->rtt = 0;
 
-  return sizeof(SctpTfrcChunk_S);
+  return spTfrcChunk->sHdr.usLength;
 }
 
