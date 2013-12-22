@@ -1280,3 +1280,14 @@ void SctpRateHybridSink::ProcessOptionChunk(u_char *ucpInChunk)
 			break;
 	}
 }
+
+/*int SctpRateHybridSink::BundleControlChunks(u_char *ucpOutData)
+{
+	SctpTfrcAckChunk_S *spTfrcAckChunk = (SctpTfrcAckChunk_S *) ucpOutData;
+
+	spTfrcAckChunk->sHdr.ucType = SCTP_CHUNK_TFRC_ACK;
+	spTfrcChunk->sHdr.usLength = sizeof(SctpTfrcAckChunk_S);*/
+
+	/*assign values */
+
+//}

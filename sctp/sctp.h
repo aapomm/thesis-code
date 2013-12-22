@@ -160,7 +160,8 @@ enum SctpChunkType_E
   SCTP_CHUNK_NRSACK,
 	
 	/* TFRC Chunk */
-	SCTP_CHUNK_TFRC
+	SCTP_CHUNK_TFRC,
+	SCTP_CHUNK_TFRC_ACK
 };
 
 struct AppData_S 
@@ -394,6 +395,15 @@ struct SctpTfrcChunk_S
   int fsize;
   int UrgentFlag;
   int round_id ;
+};
+
+struct SctpTfrcAckChunk_S
+{
+  SctpChunkHdr_S sHdr;
+  double timestamp_offset;
+  double timestamp_echo;
+  double flost;
+  double rate_since_last_report;
 };
 
 /* SCTP state defines for internal state machine */
