@@ -919,34 +919,10 @@ void SctpRateHybrid::sendmsg(int iNumBytes, const char *cpFlags)
  */
 int SctpRateHybrid::BundleControlChunks(u_char *ucpOutData)
 {
-  /*SctpTimestampChunk_S *spTimestampChunk = (SctpTimestampChunk_S *) ucpOutData;
+  SctpTfrcChunk_S *spTfrcChunk = (SctpTfrcChunk_S *) ucpOutData;
 
-  spTimestampChunk->sHdr.usLength = sizeof(SctpTimestampChunk_S);*/
+	spTfrcChunk->seqno = seqno_++;
 
-  /* We need to send a timestamp in the timestamp chunk when sending data
-   * chunks (and not sack or foward tsn chunks)... otherwise, we may only
-   * need the timestamp echo to be set.
-   */
-  /*if((eSendNewDataChunks == TRUE || eMarkedChunksPending == TRUE) && 
-     eSackChunkNeeded == FALSE  && 
-     eForwardTsnNeeded == FALSE)
-    {
-      spTimestampChunk->sHdr.ucType = SCTP_CHUNK_TIMESTAMP;
-      spTimestampChunk->sHdr.ucFlags |= SCTP_TIMESTAMP_FLAG_TS;
-      spTimestampChunk->fTimestamp = (float) Scheduler::instance().clock();
-    }
-  if(eNeedTimestampEcho == TRUE)
-    {
-      spTimestampChunk->sHdr.ucType = SCTP_CHUNK_TIMESTAMP;
-      spTimestampChunk->sHdr.ucFlags |= SCTP_TIMESTAMP_FLAG_ECHO;
-      spTimestampChunk->fEcho = fOutTimestampEcho;
-      eNeedTimestampEcho = FALSE;
-    }
-
-  DBG_PL(BundleControlChunks, "returning %d"), 
-    spTimestampChunk->sHdr.usLength DBG_PR;
-  DBG_X(BundleControlChunks);
-  return spTimestampChunk->sHdr.usLength; */
-	return 0;
+  return sizeof(SctpTfrcChunk_S);
 }
 
