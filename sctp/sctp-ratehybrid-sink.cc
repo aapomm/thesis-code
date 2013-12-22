@@ -133,7 +133,6 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
 
   eStartOfPacket = TRUE;
 
-
   do
     {
       //DBG_PL(recv, "iRemainingDataLen=%d"), iRemainingDataLen DBG_PR;
@@ -146,7 +145,6 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
       NextChunk(&ucpCurrInChunk, &iRemainingDataLen);
     }
   while(ucpCurrInChunk != NULL);
-
   /* Let's see if we have any response chunks(currently only handshake related)
    * to transmit. 
    *
@@ -1271,15 +1269,45 @@ void SctpRateHybridSink::ProcessOptionChunk(u_char *ucpInChunk)
 
 int SctpRateHybridSink::BundleControlChunks(u_char *ucpOutData)
 {
-  if(sendReport || uiNumChunks == 0)
+  if((sendReport || uiNumChunks == 0) && (eState == SCTP_STATE_ESTABLISHED))
   {
   	SctpTfrcAckChunk_S *spTfrcAckChunk = (SctpTfrcAckChunk_S *) ucpOutData;
 
 		/*assign values */
-		spTfrcAckChunk = createTfrcAckChunk(ucpOutData, p);
 
 		spTfrcAckChunk->sHdr.ucType = SCTP_CHUNK_TFRC_ACK;
 		spTfrcAckChunk->sHdr.usLength = sizeof(SctpTfrcAckChunk_S);
+		double now = Scheduler::instance().clock();
+
+		/*don't send an ACK unless we've received new data*/
+		/*if we're sending slower than one packet per RTT, don't need*/
+		/*multiple responses per data packet.*/
+		/*
+		 * Do we want to send a report even if we have not received
+		 * any new data?
+		 */ 
+
+		if (last_arrival_ >= last_report_sent) {
+			spTfrcAckChunk->seqno=maxseq;
+			spTfrcAckChunk->timestamp_echo=last_timestamp_;
+			spTfrcAckChunk->timestamp_offset=now-last_arrival_;
+			spTfrcAckChunk->timestamp=now;
+			spTfrcAckChunk->NumFeedback_ = NumFeedback_;
+			if (p < 0) 
+				spTfrcAckChunk->flost = est_loss (); 
+			else
+				spTfrcAckChunk->flost = p;
+			spTfrcAckChunk->rate_since_last_report = est_thput ();
+			spTfrcAckChunk->losses = losses_since_last_report;
+			if (total_received_ <= 0) 
+				spTfrcAckChunk->true_loss = 0.0;
+			else 
+				spTfrcAckChunk->true_loss = 1.0 * 
+					total_losses_/(total_received_+total_dropped_);
+			last_report_sent = now; 
+			rcvd_since_last_report = 0;
+			losses_since_last_report = 0;
+		}
 
     sendReport = false;
 

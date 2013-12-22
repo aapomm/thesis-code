@@ -509,9 +509,7 @@ void SctpRateHybrid::update_rtt(double tao, double now){
 	// printf("ratehybrid rttcur: %lf = %lf - %lf\n", rttcur_, now, tao);
 	rttcur_ = now - tao;
 }
-
-void SctpRateHybrid::decrease_rate (){
-
+void SctpRateHybrid::decrease_rate (){ 
 	double now = Scheduler::instance().clock(); 
 	rate_ = rcvrate;
 	double maximumrate = (maxrate_>size_/rtt_)?maxrate_:size_/rtt_ ;
@@ -926,25 +924,32 @@ void SctpRateHybrid::sendmsg(int iNumBytes, const char *cpFlags)
  */
 int SctpRateHybrid::BundleControlChunks(u_char *ucpOutData)
 {
-  SctpTfrcChunk_S *spTfrcChunk = (SctpTfrcChunk_S *) ucpOutData;
+	if(eState == SCTP_STATE_ESTABLISHED)
+	{
+		SctpTfrcChunk_S *spTfrcChunk = (SctpTfrcChunk_S *) ucpOutData;
 
-	spTfrcChunk->sHdr.ucType = SCTP_CHUNK_TFRC;
-	spTfrcChunk->sHdr.usLength = sizeof(SctpTfrcChunk_S);
+		spTfrcChunk->sHdr.ucType = SCTP_CHUNK_TFRC;
+		spTfrcChunk->sHdr.usLength = sizeof(SctpTfrcChunk_S);
 
-	/* assign dummy values */
-	spTfrcChunk->seqno = 0;
-	spTfrcChunk->timestamp = 0;
-	spTfrcChunk->rtt = 0;
+		/* assign dummy values */
+		spTfrcChunk->seqno = 0;
+		spTfrcChunk->timestamp = 0;
+		spTfrcChunk->rtt = 0;
 
-  return spTfrcChunk->sHdr.usLength;
+		return spTfrcChunk->sHdr.usLength;
+	}
+	return 0;
 }
 
 void SctpRateHybrid::ProcessOptionChunk(u_char *ucpInChunk)
 {
-	switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
+	if(eState == SCTP_STATE_ESTABLISHED)
 	{
-		case SCTP_CHUNK_TFRC_ACK:
-		  TFRC_update(ucpInChunk);	
-			break;
+		switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
+		{
+			case SCTP_CHUNK_TFRC_ACK:
+				TFRC_update(ucpInChunk);	
+				break;
+		}
 	}
 }
