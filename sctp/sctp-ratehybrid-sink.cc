@@ -1274,3 +1274,13 @@ void SctpRateHybridSink::init_WALI () {
 	}
 	init_WALI_flag = 1;  /* initialization done */
 }
+
+void SctpRateHybridSink::ProcessOptionChunk(u_char *ucpInChunk)
+{
+	switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
+	{
+		case SCTP_CHUNK_TFRC:
+			printf("WEW PRE\n");
+			break;
+	}
+}

@@ -645,6 +645,18 @@ void SctpRateHybrid::nextpkt(){
 		pktQ_.spTail = NULL;
 	}
 
+	/* Get TFRC chunk */
+	Packet *pktToSend = (Packet *) node->vpData;
+	PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
+	u_char *firstChunk = pktToSendData->data(); // TFRC chunk is always the 1st chunk
+	
+	/* Add TFRC details */	
+	printf("%d", ((SctpTfrcChunk_S *) firstChunk)->seqno);
+	((SctpTfrcChunk_S *) firstChunk)->timestamp = Scheduler::instance().clock();
+	((SctpTfrcChunk_S *) firstChunk)->rtt = rtt_;
+	((SctpTfrcChunk_S *) firstChunk)->seqno = seqno_++;
+
+
 	hdr_sctp::access((Packet *)(node->vpData))->timestamp = Scheduler::instance().clock();
 	hdr_sctp::access((Packet *)(node->vpData))->rtt=rtt_;
 	send((Packet *)(node->vpData),0);
@@ -923,6 +935,8 @@ int SctpRateHybrid::BundleControlChunks(u_char *ucpOutData)
 
 	spTfrcChunk->sHdr.ucType = SCTP_CHUNK_TFRC;
 	spTfrcChunk->sHdr.usLength = sizeof(SctpTfrcChunk_S);
+
+	/* assign dummy values */
 	spTfrcChunk->seqno = 0;
 	spTfrcChunk->timestamp = 0;
 	spTfrcChunk->rtt = 0;

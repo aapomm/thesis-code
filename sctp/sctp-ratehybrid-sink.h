@@ -68,6 +68,7 @@ protected:
 	virtual void  processTFRCResponse(Packet *pkt);
   Packet* addTFRCHeaders(Packet*, double);
   void SendPacket(u_char*, int, SctpDest_S*);
+	void ProcessOptionChunk(u_char*);
 	
 	// algo specific
 	double est_loss_WALI();
