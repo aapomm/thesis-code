@@ -645,17 +645,17 @@ void SctpRateHybrid::nextpkt(){
 		pktQ_.spTail = NULL;
 	}
 
-	/* Get TFRC chunk */
-	Packet *pktToSend = (Packet *) node->vpData;
-	PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
-	u_char *firstChunk = pktToSendData->data(); // TFRC chunk is always the 1st chunk
-	
-	/* Add TFRC details */	
-	printf("%d", ((SctpTfrcChunk_S *) firstChunk)->seqno);
-	((SctpTfrcChunk_S *) firstChunk)->timestamp = Scheduler::instance().clock();
-	((SctpTfrcChunk_S *) firstChunk)->rtt = rtt_;
-	((SctpTfrcChunk_S *) firstChunk)->seqno = seqno_++;
+	if (eState == SCTP_STATE_ESTABLISHED) {
+		/* Get TFRC chunk */
+		Packet *pktToSend = (Packet *) node->vpData;
+		PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
+		u_char *firstChunk = pktToSendData->data(); // TFRC chunk is always the 1st chunk
 
+		/* Add TFRC details */	
+		((SctpTfrcChunk_S *) firstChunk)->timestamp = Scheduler::instance().clock();
+		((SctpTfrcChunk_S *) firstChunk)->rtt = rtt_;
+		((SctpTfrcChunk_S *) firstChunk)->seqno = seqno_++;
+	}
 
 	hdr_sctp::access((Packet *)(node->vpData))->timestamp = Scheduler::instance().clock();
 	hdr_sctp::access((Packet *)(node->vpData))->rtt=rtt_;
