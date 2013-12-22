@@ -54,6 +54,7 @@ protected:
 	virtual void cancelTimer();
 	virtual void TFRC_update(Packet *pkt);
 	virtual void addToList(Packet *p);
+	virtual int BundleControlChunks(u_char *);
   // virtual void recv(Packet *pkt, Handler*);
 
 	/* variables for TFRC integration
@@ -144,15 +145,15 @@ public:
 	virtual void  recv(Packet *pkt, Handler*);
 	double rfc3390(int size);
 	virtual void  update_rtt(double tao, double now);	
-  	virtual void increase_rate(double p);
-  	virtual void decrease_rate();
-  	virtual double initial_rate();
-  	virtual void nextpkt();
-  	virtual void slowstart();
-  	virtual void  sendmsg(int nbytes, const char *flags = 0);
+  virtual void increase_rate(double p);
+  virtual void decrease_rate();
+  virtual double initial_rate();
+  virtual void nextpkt();
+  virtual void slowstart();
+  virtual void  sendmsg(int nbytes, const char *flags = 0);
 	// virtual void  sendmsg(int iNumBytes, const char *cpFlags);
 	// int command(int argc, const char*const* argv);	
-  	double rate_;
+  double rate_;
 };
 
 #endif

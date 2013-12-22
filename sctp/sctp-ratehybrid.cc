@@ -913,3 +913,40 @@ void SctpRateHybrid::sendmsg(int iNumBytes, const char *cpFlags)
 
   delete [] ucpOutData;
 }
+
+/* This function bundles control chunks with data chunks. We copy the timestamp
+ * chunk into the outgoing packet and return the size of the timestamp chunk.
+ */
+int SctpRateHybrid::BundleControlChunks(u_char *ucpOutData)
+{
+  /*SctpTimestampChunk_S *spTimestampChunk = (SctpTimestampChunk_S *) ucpOutData;
+
+  spTimestampChunk->sHdr.usLength = sizeof(SctpTimestampChunk_S);*/
+
+  /* We need to send a timestamp in the timestamp chunk when sending data
+   * chunks (and not sack or foward tsn chunks)... otherwise, we may only
+   * need the timestamp echo to be set.
+   */
+  /*if((eSendNewDataChunks == TRUE || eMarkedChunksPending == TRUE) && 
+     eSackChunkNeeded == FALSE  && 
+     eForwardTsnNeeded == FALSE)
+    {
+      spTimestampChunk->sHdr.ucType = SCTP_CHUNK_TIMESTAMP;
+      spTimestampChunk->sHdr.ucFlags |= SCTP_TIMESTAMP_FLAG_TS;
+      spTimestampChunk->fTimestamp = (float) Scheduler::instance().clock();
+    }
+  if(eNeedTimestampEcho == TRUE)
+    {
+      spTimestampChunk->sHdr.ucType = SCTP_CHUNK_TIMESTAMP;
+      spTimestampChunk->sHdr.ucFlags |= SCTP_TIMESTAMP_FLAG_ECHO;
+      spTimestampChunk->fEcho = fOutTimestampEcho;
+      eNeedTimestampEcho = FALSE;
+    }
+
+  DBG_PL(BundleControlChunks, "returning %d"), 
+    spTimestampChunk->sHdr.usLength DBG_PR;
+  DBG_X(BundleControlChunks);
+  return spTimestampChunk->sHdr.usLength; */
+	return 0;
+}
+
