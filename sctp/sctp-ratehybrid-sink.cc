@@ -134,10 +134,6 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
   eStartOfPacket = TRUE;
 
 
-  // compute TFRC response
-  if (hdr_sctp::access(opInPkt)->contains_data == 1) {
-  	processTFRCResponse(opInPkt);
-  }
   do
     {
       //DBG_PL(recv, "iRemainingDataLen=%d"), iRemainingDataLen DBG_PR;
@@ -231,10 +227,9 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
   delete [] ucpOutData;
 }
 
-void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
+void SctpRateHybridSink::processTFRCResponse(u_char *ucpInChunk)
 {
-  hdr_sctp* tfrch = hdr_sctp::access(pkt);
-	hdr_flags* hf = hdr_flags::access(pkt);
+	SctpTfrcChunk_S *tfrch = (SctpTfrcChunk_S *) ucpInChunk;
 	double now = Scheduler::instance().clock();
   data = true;
 	p = -1;
@@ -248,7 +243,7 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 	rcvd_since_last_report ++;
 	total_received_ ++;
 	// bytes_ was added by Tom Phelan, for reporting bytes received.
-	bytes_ += hdr_cmn::access(pkt)->size();
+	// bytes_ += hdr_cmn::access(pkt)->size();
 	if (maxseq < 0) {
 		// This is the first data packet.
     maxseq = tfrch->seqno - 1 ;
@@ -289,19 +284,20 @@ void SctpRateHybridSink::processTFRCResponse(Packet *pkt)
 		last_timestamp_=tfrch->timestamp;
 		rtvec_[seqno%hsz]=now;	
 		tsvec_[seqno%hsz]=last_timestamp_;	
-		if (hf->ect() == 1 && hf->ce() == 1) {
-			// ECN action
-			lossvec_[seqno%hsz] = ECN_RCVD;
-			++ total_losses_;
-			losses_since_last_report++;
-			if (new_loss(seqno, tsvec_[seqno%hsz])) {
-				ecnEvent = 1;
-				lossvec_[seqno%hsz] = ECNLOST;
-			} 
-			if (algo == WALI) {
-                       		++ losses[0];
-			}
-		} else lossvec_[seqno%hsz] = RCVD;
+		// if (hf->ect() == 1 && hf->ce() == 1) {
+		// 	// ECN action
+		// 	lossvec_[seqno%hsz] = ECN_RCVD;
+		// 	++ total_losses_;
+		// 	losses_since_last_report++;
+		// 	if (new_loss(seqno, tsvec_[seqno%hsz])) {
+		// 		ecnEvent = 1;
+		// 		lossvec_[seqno%hsz] = ECNLOST;
+		// 	} 
+		// 	if (algo == WALI) {
+  //                      		++ losses[0];
+		// 	}
+		// } else lossvec_[seqno%hsz] = RCVD;
+		lossvec_[seqno%hsz] = RCVD;
 	}
 	if (seqno > maxseq) {
 		int i = maxseq + 1;
@@ -1280,7 +1276,7 @@ void SctpRateHybridSink::ProcessOptionChunk(u_char *ucpInChunk)
 	switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
 	{
 		case SCTP_CHUNK_TFRC:
-			printf("WEW PRE\n");
+			processTFRCResponse(ucpInChunk);
 			break;
 	}
 }

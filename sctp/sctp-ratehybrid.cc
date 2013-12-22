@@ -223,12 +223,6 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   memcpy(sctph->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
-	sctph->tzero=tzero_;
-	sctph->rate=rate_;
-	sctph->psize=size_;
-	sctph->fsize=fsize_;
-	sctph->UrgentFlag=UrgentFlag;
-	sctph->round_id=round_id;
 	if (sendData_) {
 		sctph->contains_data = 1;
 		sctph->seqno=seqno_++;
@@ -649,12 +643,18 @@ void SctpRateHybrid::nextpkt(){
 		/* Get TFRC chunk */
 		Packet *pktToSend = (Packet *) node->vpData;
 		PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
-		u_char *firstChunk = pktToSendData->data(); // TFRC chunk is always the 1st chunk
+		SctpTfrcChunk_S *firstChunk = (SctpTfrcChunk_S *) pktToSendData->data(); // TFRC chunk is always the 1st chunk
 
 		/* Add TFRC details */	
-		((SctpTfrcChunk_S *) firstChunk)->timestamp = Scheduler::instance().clock();
-		((SctpTfrcChunk_S *) firstChunk)->rtt = rtt_;
-		((SctpTfrcChunk_S *) firstChunk)->seqno = seqno_++;
+		firstChunk->timestamp = Scheduler::instance().clock();
+		firstChunk->rtt = rtt_;
+		firstChunk->seqno = seqno_++;
+		firstChunk->tzero=tzero_;
+		firstChunk->rate=rate_;
+		firstChunk->psize=size_;
+		firstChunk->fsize=fsize_;
+		firstChunk->UrgentFlag=UrgentFlag;
+		firstChunk->round_id=round_id;
 	}
 
 	hdr_sctp::access((Packet *)(node->vpData))->timestamp = Scheduler::instance().clock();

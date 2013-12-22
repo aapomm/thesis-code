@@ -65,7 +65,7 @@ protected:
 	void print_num_rtts_all(int *num_rtts);
 	int new_loss(int i, double tstamp);
 	double estimate_tstamp(int before, int after, int i);
-	virtual void  processTFRCResponse(Packet *pkt);
+	virtual void  processTFRCResponse(u_char *ucpInChunk);
   Packet* addTFRCHeaders(Packet*, double);
   void SendPacket(u_char*, int, SctpDest_S*);
 	void ProcessOptionChunk(u_char*);

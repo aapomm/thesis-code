@@ -388,6 +388,12 @@ struct SctpTfrcChunk_S
   int seqno;
   double timestamp;
   double rtt;
+  double rate;
+  double tzero;
+  int psize;
+  int fsize;
+  int UrgentFlag;
+  int round_id ;
 };
 
 /* SCTP state defines for internal state machine */
