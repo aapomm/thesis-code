@@ -157,7 +157,10 @@ enum SctpChunkType_E
   SCTP_CHUNK_TIMESTAMP,
 
   /* PN: 6/17/2007. NR-Sack chunk type */
-  SCTP_CHUNK_NRSACK
+  SCTP_CHUNK_NRSACK,
+	
+	/* TFRC Chunk */
+	SCTP_CHUNK_TFRC
 };
 
 struct AppData_S 

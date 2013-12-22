@@ -15,6 +15,13 @@
 
 class SctpRateHybrid;
 
+struct SctpTfrcChunk_S
+{
+	int seqno;
+	double timestamp;
+	double rtt;
+}
+
 //SEND TIMER
 class SendTimer : public TimerHandler
 {
