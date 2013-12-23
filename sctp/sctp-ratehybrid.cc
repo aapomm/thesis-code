@@ -379,7 +379,7 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
  	delete [] ucpOutData;
 }
 
-void SctpRateHybrid::TFRC_update(u_char *ucpInChunk){
+void SctpRateHybrid::TfrcUpdate(u_char *ucpInChunk){
     /* 
    		TFRC INTEGRATION
     */
@@ -941,7 +941,7 @@ void SctpRateHybrid::ProcessOptionChunk(u_char *ucpInChunk)
 		switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
 		{
 			case SCTP_CHUNK_TFRC_ACK:
-				TFRC_update(ucpInChunk);	
+				TfrcUpdate(ucpInChunk);	
 				break;
 		}
 	}

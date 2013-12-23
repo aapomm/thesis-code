@@ -225,7 +225,7 @@ void SctpRateHybridSink::recv(Packet *opInPkt, Handler*)
   delete [] ucpOutData;
 }
 
-void SctpRateHybridSink::processTFRCResponse(u_char *ucpInChunk)
+void SctpRateHybridSink::TfrcUpdate(u_char *ucpInChunk)
 {
 	SctpTfrcChunk_S *tfrch = (SctpTfrcChunk_S *) ucpInChunk;
 	double now = Scheduler::instance().clock();
@@ -1262,7 +1262,7 @@ void SctpRateHybridSink::ProcessOptionChunk(u_char *ucpInChunk)
 	switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
 	{
 		case SCTP_CHUNK_TFRC:
-			processTFRCResponse(ucpInChunk);
+			TfrcUpdate(ucpInChunk);
 			break;
 	}
 }

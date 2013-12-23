@@ -65,7 +65,7 @@ protected:
 	void print_num_rtts_all(int *num_rtts);
 	int new_loss(int i, double tstamp);
 	double estimate_tstamp(int before, int after, int i);
-	virtual void  processTFRCResponse(u_char *ucpInChunk);
+	virtual void  TfrcUpdate(u_char *ucpInChunk);
   SctpTfrcAckChunk_S* createTfrcAckChunk(u_char *, double);
 	int BundleControlChunks(u_char *);
   void SendPacket(u_char*, int, SctpDest_S*);
