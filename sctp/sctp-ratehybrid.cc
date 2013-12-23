@@ -223,10 +223,10 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
   memcpy(sctph->SctpTrace(), spSctpTrace, 
 	 (uiNumChunks * sizeof(SctpTrace_S)) );
 
-	if (sendData_) {
+	/*if (sendData_) {
 		sctph->contains_data = 1;
 		sctph->seqno=seqno_++;
-	}
+	}*/
   uiNumChunks = 0; // reset the counter
 
 // printf("time: %lf\n", Scheduler::instance().clock());
@@ -641,7 +641,7 @@ void SctpRateHybrid::nextpkt(){
 		/* Add TFRC details */	
 		firstChunk->timestamp = Scheduler::instance().clock();
 		firstChunk->rtt = rtt_;
-		firstChunk->seqno = seqno_++;
+		firstChunk->seqno = ++seqno_;
 		firstChunk->tzero=tzero_;
 		firstChunk->rate=rate_;
 		firstChunk->psize=size_;
@@ -744,7 +744,6 @@ void SctpRateHybrid::slowstart ()
 	} else {
 		// If we get here, ss_maxrate <= 0, so the receive rate is 0.
 		// We should go back to a very small sending rate!!!
-    printf("condition5 \n");
 		oldrate_ = rate_;
 		rate_ = size_/rtt_; 
 		delta_ = 0;
