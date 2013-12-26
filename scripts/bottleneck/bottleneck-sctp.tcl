@@ -11,7 +11,7 @@ proc finish {} {
 	$ns flush-trace
 	close $nf
 	close $nd
-	#exec nam out.nam &
+	exec gawk -f ../awk/bottleneck-throughput.awk bottleneck-sctp.tr > bottleneck-sctp.plot
 	exit 0
 }
 

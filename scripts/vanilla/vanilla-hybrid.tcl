@@ -12,6 +12,7 @@ proc finish {} {
 	close $nf
 	close $nd
 	#exec nam out.nam &
+	exec gawk -f ../awk/vanilla-throughput.awk vanilla-hybrid.tr > vanilla-hybrid.plot
 	exit 0
 	
 }

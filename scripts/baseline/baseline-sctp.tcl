@@ -14,7 +14,7 @@ proc finish {} {
         $ns flush-trace
         close $nf
         close $nd
-        # exec nam out.nam &
+        exec gawk -f ../awk/baseline-throughput.awk baseline-sctp.tr > baseline-sctp.plot
         exit 0
 }
 $ns node-config -macType Mac/802_3

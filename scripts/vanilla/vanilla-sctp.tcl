@@ -11,7 +11,7 @@ proc finish {} {
 	$ns flush-trace
 	close $nf
 	close $nd
-	#exec nam out.nam &
+	exec gawk -f ../awk/vanilla-throughput.awk vanilla-sctp.tr > vanilla-sctp.plot
 	exit 0
 }
 
