@@ -1244,3 +1244,75 @@ void SctpRateHybrid::multiply_array(double *a, int sz, double multiplier) {
 		a[i] = old * multiplier ;
 	}
 }
+
+double SctpRateHybrid::weighted_average1(int start, int end, double factor, double *m, double *w, int *sample, int ShortIntervals, int *losses, int *count_losses, int *num_rtts)
+{
+        int i;
+        int ThisSample;
+        double wsum = 0;
+        double answer = 0;
+        if (smooth_ == 1 && start == 0) {
+                if (end == numsamples+1) {
+                        // the array is full, but we don't want to use
+                        //  the last loss interval in the array
+                        end = end-1;
+                }
+                // effectively shift the weight arrays
+                for (i = start ; i < end; i++)
+                        if (i==0)
+                                wsum += m[i]*w[i+1];
+                        else
+                                wsum += factor*m[i]*w[i+1];
+                for (i = start ; i < end; i++) {
+                        ThisSample = sample[i];
+                        if (ShortIntervals%10 == 1 && count_losses[i] == 1) {
+			       ThisSample = get_sample(sample[i], losses[i]);
+                        }
+                        if (ShortIntervals%10 == 2 && count_losses[i] == 1) {
+			       int adjusted_losses = int(fsize_/size_);
+			       if (losses[i] < adjusted_losses) {
+					adjusted_losses = losses[i];
+			       }
+			       ThisSample = get_sample(sample[i], adjusted_losses);
+                        }
+                        if (ShortIntervals%10 == 3 && count_losses[i] == 1) {
+			       ThisSample = get_sample_rtts(sample[i], losses[i], num_rtts[i]);
+                        }
+                        if (i==0)
+                                answer += m[i]*w[i+1]*ThisSample/wsum;
+                                //answer += m[i]*w[i+1]*sample[i]/wsum;
+                        else
+                                answer += factor*m[i]*w[i+1]*ThisSample/wsum;
+                                //answer += factor*m[i]*w[i+1]*sample[i]/wsum;
+		}
+                return answer;
+
+        } else {
+                for (i = start ; i < end; i++)
+                        if (i==0)
+                                wsum += m[i]*w[i];
+                        else
+                                wsum += factor*m[i]*w[i];
+                for (i = start ; i < end; i++) {
+                       ThisSample = sample[i];
+                       if (ShortIntervals%10 == 1 && count_losses[i] == 1) {
+			       ThisSample = get_sample(sample[i], losses[i]);
+                       }
+                       if (ShortIntervals%10 == 2 && count_losses[i] == 1) {
+			       ThisSample = get_sample(sample[i], 7);
+			       // Replace 7 by 1460/packet size.
+                               // NOT FINISHED.
+                       }
+                        if (ShortIntervals%10 == 3 && count_losses[i] == 1) {
+			       ThisSample = get_sample_rtts(sample[i], losses[i], (int) num_rtts[i]);
+                        }
+                       if (i==0)
+                                answer += m[i]*w[i]*ThisSample/wsum;
+                                //answer += m[i]*w[i]*sample[i]/wsum;
+                        else
+                                answer += factor*m[i]*w[i]*ThisSample/wsum;
+                                //answer += factor*m[i]*w[i]*sample[i]/wsum;
+		}
+                return answer;
+        }
+}
