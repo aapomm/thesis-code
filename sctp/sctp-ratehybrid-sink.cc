@@ -917,6 +917,12 @@ double SctpRateHybridSink::est_loss_WALI ()
 			mult_factor_ = 1.0;
 		}
 	}
+
+	/*for(i = 0; i < 8; i++)
+	{
+		printf("%d ", sample[i]);
+	}
+	printf("\n");*/
 	last_sample = maxseq+1 ; 
 	double now = Scheduler::instance().clock();
         //if (ShortIntervals_ > 0 && printLoss_ > 0) {

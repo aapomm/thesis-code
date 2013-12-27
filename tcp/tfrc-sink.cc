@@ -336,7 +336,6 @@ double TfrcSinkAgent::est_thput ()
 	double time_for_rcv_rate;
 	double now = Scheduler::instance().clock();
 	double thput = 1 ;
-  printf("rtt: %lf gagoooo~\n", rtt_);
 
 	if ((rtt_ > 0) && ((now - last_report_sent) >= rtt_)) {
 		// more than an RTT since the last report
@@ -415,7 +414,6 @@ void TfrcSinkAgent::sendpkt(double p)
 		else
 			tfrc_ackh->flost = p;
 		tfrc_ackh->rate_since_last_report = est_thput ();
-		printf("tfrc-sink thput: %lf\n", est_thput());
 		tfrc_ackh->losses = losses_since_last_report;
 		if (total_received_ <= 0) 
 			tfrc_ackh->true_loss = 0.0;
@@ -573,6 +571,11 @@ double TfrcSinkAgent::est_loss_WALI ()
 			mult_factor_ = 1.0;
 		}
 	}
+	for(i = 0; i < 8; i++)
+	{
+		printf("%d ", sample[i]);
+	}
+	printf("\n");
 	last_sample = maxseq+1 ; 
 	double now = Scheduler::instance().clock();
         //if (ShortIntervals_ > 0 && printLoss_ > 0) {

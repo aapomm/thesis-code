@@ -371,6 +371,12 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
      	eSendNewDataChunks = FALSE; // reset AFTER sent (o/w breaks dependencies)
     }
 
+	// print loss intervals
+	for (int count = 0; count < 8; count++)
+	{
+		printf("%d ", lossIntervals[count]);
+	}
+	printf("\n");
 	//FREE PACKET
  	delete hdr_sctp::access(opInPkt)->SctpTrace();
  	hdr_sctp::access(opInPkt)->SctpTrace() = NULL;
@@ -997,7 +1003,11 @@ void SctpRateHybrid::FastRtx()
 	    = MAX(spCurrBuffData->spDest->iCwnd/2, 4 * (int) uiMaxDataSize);
       // = MAX(spCurrBuffData->spDest->iCwnd*(1/4), 4 * (int) uiMaxDataSize);
 	  spCurrBuffData->spDest->iCwnd = spCurrBuffData->spDest->iSsthresh;
-		printf("Loss!\n");
+
+		// when SCTP detects a loss in the FastRtx() function, it's a new loss event
+		currentLossIntervalIndex = (currentLossIntervalIndex + 1) % 8;
+		currentLossIntervalLength = 0;
+
 	  spCurrBuffData->spDest->iPartialBytesAcked = 0; //reset
 	  tiCwnd++; // trigger changes for trace to pick up
 	  spCurrBuffData->spDest->eCcApplied = TRUE;
@@ -1040,5 +1050,144 @@ void SctpRateHybrid::FastRtx()
    */
   if(eMarkedChunksPending == TRUE)  
     RtxMarkedChunks(RTX_LIMIT_ONE_PACKET);
+}
+
+void SctpRateHybrid::ProcessSackChunk(u_char *ucpSackChunk)
+{
+
+  SctpSackChunk_S *spSackChunk = (SctpSackChunk_S *) ucpSackChunk;
+
+  Boolean_E eFastRtxNeeded = FALSE;
+  Boolean_E eNewCumAck = FALSE;
+  Node_S *spCurrDestNode = NULL;
+  SctpDest_S *spCurrDestNodeData = NULL;
+  u_int uiTotalOutstanding = 0;
+  int i = 0;
+
+  /* make sure we clear all the iNumNewlyAckedBytes before using them!
+   */
+  for(spCurrDestNode = sDestList.spHead;
+      spCurrDestNode != NULL;
+      spCurrDestNode = spCurrDestNode->spNext)
+    {
+      spCurrDestNodeData = (SctpDest_S *) spCurrDestNode->vpData;
+      spCurrDestNodeData->iNumNewlyAckedBytes = 0;
+      spCurrDestNodeData->spFirstOutstanding = NULL;
+    }
+
+  if(spSackChunk->uiCumAck < uiCumAckPoint) 
+    {
+      /* this cumAck's a previously cumAck'd tsn (ie, it's out of order!)
+       * ...so ignore!
+       */
+      return;
+    }
+  else if(spSackChunk->uiCumAck > uiCumAckPoint)
+    {
+      eNewCumAck = TRUE; // incomding SACK's cum ack advances the cum ack point
+      SendBufferDequeueUpTo(spSackChunk->uiCumAck);
+      uiCumAckPoint = spSackChunk->uiCumAck; // Advance the cumAck pointer
+			if(currentLossIntervalIndex == 0)
+				lossIntervals[currentLossIntervalIndex] = spSackChunk->uiCumAck;
+			else
+				lossIntervals[currentLossIntervalIndex] = spSackChunk->uiCumAck - lossIntervals[currentLossIntervalIndex - 1];
+    }
+
+  if(spSackChunk->usNumGapAckBlocks != 0) // are there any gaps??
+    {
+      eFastRtxNeeded = ProcessGapAckBlocks(ucpSackChunk, eNewCumAck);
+    } 
+
+  for(spCurrDestNode = sDestList.spHead;
+      spCurrDestNode != NULL;
+      spCurrDestNode = spCurrDestNode->spNext)
+    {
+      spCurrDestNodeData = (SctpDest_S *) spCurrDestNode->vpData;
+
+      /* Only adjust cwnd if:
+       *    1. sack advanced the cum ack point 
+       *    2. this destination has newly acked bytes
+       *    3. the cum ack is at or beyond the recovery window
+       *
+       * Also, we MUST adjust our congestion window BEFORE we update the
+       * number of outstanding bytes to reflect the newly acked bytes in
+       * received SACK.
+       */
+      if(eNewCumAck == TRUE &&
+	 spCurrDestNodeData->iNumNewlyAckedBytes > 0 &&
+	 spSackChunk->uiCumAck >= uiRecover)
+	{
+	  AdjustCwnd(spCurrDestNodeData);
+	}
+
+      /* The number of outstanding bytes is reduced by how many bytes this 
+       * sack acknowledges.
+       */
+      if(spCurrDestNodeData->iNumNewlyAckedBytes <=
+	 spCurrDestNodeData->iOutstandingBytes)
+	{
+	  spCurrDestNodeData->iOutstandingBytes 
+	    -= spCurrDestNodeData->iNumNewlyAckedBytes;
+	}
+      else
+	spCurrDestNodeData->iOutstandingBytes = 0;
+
+      
+      if(spCurrDestNodeData->iOutstandingBytes == 0)
+	{
+	  /* All outstanding data has been acked
+	   */
+	  spCurrDestNodeData->iPartialBytesAcked = 0;  // section 7.2.2
+
+	  /* section 6.3.2.R2
+	   */
+	  if(spCurrDestNodeData->eRtxTimerIsRunning == TRUE)
+	    {
+	      StopT3RtxTimer(spCurrDestNodeData);
+	    }
+	}
+
+      /* section 6.3.2.R3 - Restart timers for destinations that have
+       * acknowledged their first outstanding (ie, no timer running) and
+       * still have outstanding data in flight.  
+       */
+      if(spCurrDestNodeData->iOutstandingBytes > 0 &&
+	 spCurrDestNodeData->eRtxTimerIsRunning == FALSE)
+	{
+	  StartT3RtxTimer(spCurrDestNodeData);
+	}
+    }
+
+
+  AdvancePeerAckPoint();
+
+  if(eFastRtxNeeded == TRUE)  // section 7.2.4
+    FastRtx();
+
+  /* Let's see if after process this sack, there are still any chunks
+   * pending... If so, rtx all allowed by cwnd.
+   */
+  else if( (eMarkedChunksPending = AnyMarkedChunks()) == TRUE)
+    {
+      /* section 6.1.C) When the time comes for the sender to
+       * transmit, before sending new DATA chunks, the sender MUST
+       * first transmit any outstanding DATA chunks which are marked
+       * for retransmission (limited by the current cwnd).  
+       */
+      RtxMarkedChunks(RTX_LIMIT_CWND);
+    }
+
+  /* (6.2.1.D.ii) Adjust PeerRwnd based on total oustanding bytes on all
+   * destinations. We need to this adjustment after any
+   * retransmissions. Otherwise the sender's view of the peer rwnd will be
+   * off, because the number outstanding increases again once a marked
+   * chunk gets retransmitted (when marked, outstanding is decreased).
+   */
+  uiTotalOutstanding = TotalOutstanding();
+  if(uiTotalOutstanding <= spSackChunk->uiArwnd)
+    uiPeerRwnd = (spSackChunk->uiArwnd  - uiTotalOutstanding);
+  else
+    uiPeerRwnd = 0;
+  
 }
 

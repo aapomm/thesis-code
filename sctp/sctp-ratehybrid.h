@@ -57,12 +57,18 @@ protected:
 	virtual void FastRtx();
 	virtual int BundleControlChunks(u_char *);
 	virtual void ProcessOptionChunk(u_char *);
+	virtual void ProcessSackChunk(u_char *);
   // virtual void recv(Packet *pkt, Handler*);
+	
+	// Variables for sender-side p computation
+	int lossIntervals [8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	int currentLossIntervalLength;
+	int currentLossIntervalIndex = 0;
 
 	/* variables for TFRC integration
 	*/
 	// Dynamic State
-  	int first_pkt_rcvd ;	// first ack received yet?
+ 	int first_pkt_rcvd ;	// first ack received yet?
   	
 	double rcvrate  ; 	// TCP friendly rate based on current RTT 
 				//  and recever-provded loss estimate
