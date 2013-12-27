@@ -59,6 +59,9 @@ protected:
 	virtual void ProcessOptionChunk(u_char *);
 	virtual void ProcessSackChunk(u_char *);
 	virtual void init_WALI();
+	void shift_array(int *a, int sz, int defval) ;
+	void shift_array(double *a, int sz, double defval) ;
+	void multiply_array(double *a, int sz, double multiplier);
   // virtual void recv(Packet *pkt, Handler*);
 	
 	// Variables for sender-side p computation

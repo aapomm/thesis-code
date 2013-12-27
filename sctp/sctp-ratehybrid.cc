@@ -1217,3 +1217,30 @@ void SctpRateHybrid::init_WALI() {
 	}
 	for (i = 0; i < numsamples + 1; i++) mult[i] = 1.0;
 }
+
+// Shift array a[] up, starting with a[sz-2] -> a[sz-1].
+void TfrcSinkAgent::shift_array(int *a, int sz, int defval) 
+{
+	int i ;
+	for (i = sz-2 ; i >= 0 ; i--) {
+		a[i+1] = a[i] ;
+	}
+	a[0] = defval;
+}
+void TfrcSinkAgent::shift_array(double *a, int sz, double defval) {
+	int i ;
+	for (i = sz-2 ; i >= 0 ; i--) {
+		a[i+1] = a[i] ;
+	}
+	a[0] = defval;
+}
+
+// Multiply array by value, starting with array index 1.
+// Array index 0 of the unshifted array contains the most recent interval.
+void TfrcSinkAgent::multiply_array(double *a, int sz, double multiplier) {
+	int i ;
+	for (i = 1; i <= sz-1; i++) {
+		double old = a[i];
+		a[i] = old * multiplier ;
+	}
+}
