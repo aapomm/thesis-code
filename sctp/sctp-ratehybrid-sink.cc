@@ -230,7 +230,6 @@ void SctpRateHybridSink::TfrcUpdate(u_char *ucpInChunk)
 	SctpTfrcChunk_S *tfrch = (SctpTfrcChunk_S *) ucpInChunk;
 	double now = Scheduler::instance().clock();
   data = true;
-	p = -1;
 	int ecnEvent = 0;
 	int congestionEvent = 0;
 	int UrgentFlag = 0;	// send loss report immediately
