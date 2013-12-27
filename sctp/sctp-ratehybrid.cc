@@ -1219,7 +1219,7 @@ void SctpRateHybrid::init_WALI() {
 }
 
 // Shift array a[] up, starting with a[sz-2] -> a[sz-1].
-void TfrcSinkAgent::shift_array(int *a, int sz, int defval) 
+void SctpRateHybrid::shift_array(int *a, int sz, int defval) 
 {
 	int i ;
 	for (i = sz-2 ; i >= 0 ; i--) {
@@ -1227,7 +1227,7 @@ void TfrcSinkAgent::shift_array(int *a, int sz, int defval)
 	}
 	a[0] = defval;
 }
-void TfrcSinkAgent::shift_array(double *a, int sz, double defval) {
+void SctpRateHybrid::shift_array(double *a, int sz, double defval) {
 	int i ;
 	for (i = sz-2 ; i >= 0 ; i--) {
 		a[i+1] = a[i] ;
@@ -1237,7 +1237,7 @@ void TfrcSinkAgent::shift_array(double *a, int sz, double defval) {
 
 // Multiply array by value, starting with array index 1.
 // Array index 0 of the unshifted array contains the most recent interval.
-void TfrcSinkAgent::multiply_array(double *a, int sz, double multiplier) {
+void SctpRateHybrid::multiply_array(double *a, int sz, double multiplier) {
 	int i ;
 	for (i = 1; i <= sz-1; i++) {
 		double old = a[i];
