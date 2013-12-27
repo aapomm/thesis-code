@@ -63,7 +63,7 @@ protected:
 	// Variables for sender-side p computation
 	int lossIntervals [8] = {0, 0, 0, 0, 0, 0, 0, 0};
 	int currentLossIntervalLength;
-	int currentLossIntervalIndex = 0;
+	int currentLossIntervalIndex = -1;
 
 	/* variables for TFRC integration
 	*/

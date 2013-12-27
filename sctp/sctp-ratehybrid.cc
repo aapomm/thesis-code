@@ -1006,7 +1006,7 @@ void SctpRateHybrid::FastRtx()
 
 		// when SCTP detects a loss in the FastRtx() function, it's a new loss event
 		currentLossIntervalIndex = (currentLossIntervalIndex + 1) % 8;
-		currentLossIntervalLength = 0;
+		currentLossIntervalLength = 1;
 
 	  spCurrBuffData->spDest->iPartialBytesAcked = 0; //reset
 	  tiCwnd++; // trigger changes for trace to pick up
@@ -1089,7 +1089,7 @@ void SctpRateHybrid::ProcessSackChunk(u_char *ucpSackChunk)
       uiCumAckPoint = spSackChunk->uiCumAck; // Advance the cumAck pointer
 			if(currentLossIntervalIndex == 0)
 				lossIntervals[currentLossIntervalIndex] = spSackChunk->uiCumAck;
-			else
+			else if(currentLossIntervalIndex > 0)
 				lossIntervals[currentLossIntervalIndex] = spSackChunk->uiCumAck - lossIntervals[currentLossIntervalIndex - 1];
     }
 
