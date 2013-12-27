@@ -54,6 +54,7 @@ protected:
 	virtual void cancelTimer();
 	virtual void TfrcUpdate(u_char *);
 	virtual void addToList(Packet *p);
+	virtual void FastRtx();
 	virtual int BundleControlChunks(u_char *);
 	virtual void ProcessOptionChunk(u_char *);
   // virtual void recv(Packet *pkt, Handler*);
