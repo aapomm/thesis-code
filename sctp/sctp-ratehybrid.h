@@ -58,12 +58,17 @@ protected:
 	virtual int BundleControlChunks(u_char *);
 	virtual void ProcessOptionChunk(u_char *);
 	virtual void ProcessSackChunk(u_char *);
+	virtual void init_WALI();
   // virtual void recv(Packet *pkt, Handler*);
 	
 	// Variables for sender-side p computation
 	int lossIntervals [8] = {0, 0, 0, 0, 0, 0, 0, 0};
 	int currentLossIntervalLength;
 	int currentLossIntervalIndex = -1;
+	int *sample;
+	int *losses;
+	int *count_losses;
+	int *num_rtts;
 
 	/* variables for TFRC integration
 	*/

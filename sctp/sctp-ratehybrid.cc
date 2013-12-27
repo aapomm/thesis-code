@@ -1194,3 +1194,26 @@ void SctpRateHybrid::ProcessSackChunk(u_char *ucpSackChunk)
   
 }
 
+void SctpRateHybrid::init_WALI() {
+	int i;
+	numsamples = 9;
+	sample = (int *)malloc((numsamples+1)*sizeof(int));
+	losses = (int *)malloc((numsamples+1)*sizeof(int));
+	count_losses = (int *)malloc((numsamples+1)*sizeof(int));
+	num_rtts = (int *)malloc((numsamples+1)*sizeof(int));
+	weights = (double *)malloc((numsamples+1)*sizeof(double));
+	mult = (double *)malloc((numsamples+1)*sizeof(double));
+	// Initialize samples to zero
+	for (i = 0; i < numsamples + 1; i++) sample[i] = 0;
+	// Initialize weights
+	if (smooth_ == 1) {
+		int mid = int(numsamples / 2);
+		for (i = 0; i < mid; i++) weights[i] = 1.0;
+		for (i = mid; i <= numsamples; i++) weights[i] = 1.0 - (i - mid)/(mid + 1.0);
+	} else {
+		int mid = int(numsamples / 2);
+		for (i = 0; i < mid; i ++) weights[i] = 1.0;
+		for (i = mid; i <= numsamples; i++) weights[i] = 1.0 - (i + 1 - mid)/(mid + 1.0);
+	}
+	for (i = 0; i < numsamples + 1; i++) mult[i] = 1.0;
+}
