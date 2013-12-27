@@ -380,47 +380,6 @@ void SctpRateHybridSink::TfrcUpdate(u_char *ucpInChunk)
 //}
 
 /*
- * Create report message, and send it.
- */
-SctpTfrcAckChunk_S* SctpRateHybridSink::createTfrcAckChunk(u_char *ucpOutData, double p)
-{
-	double now = Scheduler::instance().clock();
-
-	/*don't send an ACK unless we've received new data*/
-	/*if we're sending slower than one packet per RTT, don't need*/
-	/*multiple responses per data packet.*/
-        /*
-	 * Do we want to send a report even if we have not received
-	 * any new data?
-         */ 
-
-	if (last_arrival_ >= last_report_sent) {
-
-		SctpTfrcAckChunk_S *tfrc_ackh = (SctpTfrcAckChunk_S *) ucpOutData; 
-	
-		tfrc_ackh->seqno=maxseq;
-		tfrc_ackh->timestamp_echo=last_timestamp_;
-		tfrc_ackh->timestamp_offset=now-last_arrival_;
-		tfrc_ackh->timestamp=now;
-		tfrc_ackh->NumFeedback_ = NumFeedback_;
-		if (p < 0) 
-			tfrc_ackh->flost = est_loss (); 
-		else
-			tfrc_ackh->flost = p;
-		tfrc_ackh->rate_since_last_report = est_thput ();
-		tfrc_ackh->losses = losses_since_last_report;
-		if (total_received_ <= 0) 
-			tfrc_ackh->true_loss = 0.0;
-		else 
-			tfrc_ackh->true_loss = 1.0 * 
-			    total_losses_/(total_received_+total_dropped_);
-		last_report_sent = now; 
-		rcvd_since_last_report = 0;
-		losses_since_last_report = 0;
-		return tfrc_ackh;
-	}
-}
-/*
  * This takes as input the packet drop rate, and outputs the sending 
  *   rate in bytes per second.
  */
