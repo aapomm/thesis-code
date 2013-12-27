@@ -63,6 +63,8 @@ protected:
 	void shift_array(double *a, int sz, double defval) ;
 	void multiply_array(double *a, int sz, double multiplier);
 	double weighted_average1(int start, int end, double factor, double *m, double *w, int *sample, int ShortIntervals, int *losses, int *count_losses, int *num_rtts);
+	int get_sample(int oldSample, int numLosses);
+	int get_sample_rtts(int oldSample, int numLosses, int rtts);
   // virtual void recv(Packet *pkt, Handler*);
 	
 	// Variables for sender-side p computation

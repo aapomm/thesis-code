@@ -1316,3 +1316,35 @@ double SctpRateHybrid::weighted_average1(int start, int end, double factor, doub
                 return answer;
         }
 }
+
+int SctpRateHybrid::get_sample(int oldSample, int numLosses) 
+{
+	int newSample;
+	if (numLosses == 0) {
+		newSample = oldSample;
+	} else {
+		newSample = oldSample / numLosses;
+	}
+	return newSample;
+}
+
+int SctpRateHybrid::get_sample_rtts(int oldSample, int numLosses, int rtts) 
+{
+	int newSample;
+	if (numLosses == 0) {
+		newSample = oldSample;
+                //printf ("sample: %d numLosses: %d\n", oldSample, numLosses);
+	} else {
+                double fraction;
+                if (ShortRtts_ != 0)
+                     fraction = (ShortRtts_ + 1.0 - rtts) / ShortRtts_;
+                else fraction = 1.0;
+		int numLoss = (int) (floor(fraction * numLosses ));
+                if (numLoss != 0)
+		  newSample = oldSample / numLoss;
+                else newSample = oldSample;
+                //printf ("sample: %d rtts: %d numLosses: %d newSample: %d fraction: %5.2f numLoss %d\n",
+                //  oldSample, rtts, numLosses, newSample, fraction, numLoss);
+	}
+	return newSample;
+}
