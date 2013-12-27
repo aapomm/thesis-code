@@ -109,6 +109,7 @@ TestSuite instproc setup {tcptype list} {
 		set wrap $wrap1
 			set tcp1 [new Agent/SCTP/Ratehybrid]
 			set sink [new Agent/SCTP/RatehybridSink]
+			$tcp1 set mtu_ 1600
 			$ns_ attach-agent $node_(s1) $tcp1
 			$ns_ attach-agent $node_(k1) $sink
 			$tcp1 set fid_ $fid
