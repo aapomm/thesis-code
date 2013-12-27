@@ -1008,6 +1008,9 @@ void SctpRateHybrid::FastRtx()
 		currentLossIntervalIndex = (currentLossIntervalIndex + 1) % 8;
 		currentLossIntervalLength = 1;
 
+		// compute p!
+		printf("compute p here~\n");
+
 	  spCurrBuffData->spDest->iPartialBytesAcked = 0; //reset
 	  tiCwnd++; // trigger changes for trace to pick up
 	  spCurrBuffData->spDest->eCcApplied = TRUE;
