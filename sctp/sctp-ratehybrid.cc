@@ -1211,3 +1211,19 @@ void SctpRateHybrid::ProcessSackChunk(u_char *ucpSackChunk)
   
 }
 
+// Shift array a[] up, starting with a[sz-2] -> a[sz-1].
+void SctpRateHybrid::shift_array(int *a, int sz, int defval) 
+{
+	int i ;
+	for (i = sz-2 ; i >= 0 ; i--) {
+		a[i+1] = a[i] ;
+	}
+	a[0] = defval;
+}
+void SctpRateHybrid::shift_array(double *a, int sz, double defval) {
+	int i ;
+	for (i = sz-2 ; i >= 0 ; i--) {
+		a[i+1] = a[i] ;
+	}
+	a[0] = defval;
+}
