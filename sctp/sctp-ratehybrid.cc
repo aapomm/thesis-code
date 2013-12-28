@@ -1005,18 +1005,17 @@ void SctpRateHybrid::FastRtx()
 	  spCurrBuffData->spDest->iCwnd = spCurrBuffData->spDest->iSsthresh;
 
 		// when SCTP detects a loss in the FastRtx() function, it's a new loss event
-		currentLossIntervalIndex = (currentLossIntervalIndex + 1) % 8;
-		lossIntervals[currentLossIntervalIndex] = 1;
 
 		// compute p!
 		double I_tot0 = 0;
 		double I_tot1 = 0;
 		double W_tot = 0;
 		int k = 0;
-		for (int i = 0; i <= 8; i++){
-			if(lossIntervals[i] != 0)
-				k++;
+		while (lossIntervals[k++] != 0) {
+			printf("lossIntervals[%d] = %d\n", k, lossIntervals[k]);
+			lossIntervals[0] -= lossIntervals[k];
 		}
+		shift_array (lossIntervals, 9, 0); 
 		for(int i = 0; i <= k - 1; i++){
 			I_tot0 += ((double) lossIntervals[i] * weights[i]);
 			W_tot += weights[i];
@@ -1107,10 +1106,7 @@ void SctpRateHybrid::ProcessSackChunk(u_char *ucpSackChunk)
       eNewCumAck = TRUE; // incomding SACK's cum ack advances the cum ack point
       SendBufferDequeueUpTo(spSackChunk->uiCumAck);
       uiCumAckPoint = spSackChunk->uiCumAck; // Advance the cumAck pointer
-			if(currentLossIntervalIndex == 0)
-				lossIntervals[currentLossIntervalIndex] = spSackChunk->uiCumAck;
-			else if(currentLossIntervalIndex > 0)
-				lossIntervals[currentLossIntervalIndex] = spSackChunk->uiCumAck - lossIntervals[currentLossIntervalIndex - 1];
+			lossIntervals[0] = uiCumAckPoint;
     }
 
   if(spSackChunk->usNumGapAckBlocks != 0) // are there any gaps??
