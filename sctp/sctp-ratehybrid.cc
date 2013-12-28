@@ -1006,10 +1006,27 @@ void SctpRateHybrid::FastRtx()
 
 		// when SCTP detects a loss in the FastRtx() function, it's a new loss event
 		currentLossIntervalIndex = (currentLossIntervalIndex + 1) % 8;
-		currentLossIntervalLength = 1;
+		lossIntervals[currentLossIntervalIndex] = 1;
 
 		// compute p!
-		printf("compute p here~\n");
+		double I_tot0 = 0;
+		double I_tot1 = 0;
+		double W_tot = 0;
+		int k = 0;
+		for (int i = 0; i <= 8; i++){
+			if(lossIntervals[i] != 0)
+				k++;
+		}
+		for(int i = 0; i <= k - 1; i++){
+			I_tot0 += ((double) lossIntervals[i] * weights[i]);
+			W_tot += weights[i];
+		}
+		for(int i = 1; i <= k; i++){
+			I_tot1 += ((double) lossIntervals[i] * weights[i - 1]);
+		}
+		double I_tot = MAX(I_tot0, I_tot1);
+		double I_mean = I_tot / W_tot;
+		printf("p: %lf\n", 1 / I_mean);
 
 	  spCurrBuffData->spDest->iPartialBytesAcked = 0; //reset
 	  tiCwnd++; // trigger changes for trace to pick up

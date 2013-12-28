@@ -62,6 +62,7 @@ protected:
 	
 	// Variables for sender-side p computation
 	int lossIntervals [8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	double weights [8] = {1.0, 1.0, 1.0, 1.0, 0.8, 0.6, 0.4, 0.2};
 	int currentLossIntervalLength;
 	int currentLossIntervalIndex = -1;
 
