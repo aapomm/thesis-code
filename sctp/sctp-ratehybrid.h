@@ -49,6 +49,8 @@ protected:
 	virtual void ProcessOptionChunk(u_char *);
 	virtual void ProcessSackChunk(u_char *);
 	virtual void Timeout(SctpChunkType_E, SctpDest_S *);
+	virtual void SendBufferDequeueUpTo(u_int);
+	virtual void AddToSendBuffer(SctpDataChunkHdr_S *, int, u_int, SctpDest_S *);
 	void shift_array(int *a, int sz, int defval);
 	void shift_array(double *a, int sz, double defval);
   // virtual void recv(Packet *pkt, Handler*);
@@ -58,6 +60,9 @@ protected:
 	double weights [9] = {1.0, 1.0, 1.0, 1.0, 1.0, 0.8, 0.6, 0.4, 0.2};
 	int currentLossIntervalLength;
 	int currentLossIntervalIndex = -1;
+
+	// Variables for timestamp assignment
+	int sendBufferIndex;
 
 	/* variables for TFRC integration
 	*/

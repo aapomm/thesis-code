@@ -89,6 +89,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 
 	first_pkt_rcvd = 0 ;
 	delta_ = 0;
+	sendBufferIndex = 0;
 
 	timer_send = new SendTimer(this);
 
@@ -314,7 +315,8 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
 
  	if (noRtt) {
  		rtt_ = Scheduler::instance().clock() - firstSend;
- 		noRtt = false;
+		printf("%lf\n", rtt_);
+ 		//noRtt = false;
  	}
 
   if(hdr_sctp::access(opInPkt)->NumChunks() > 0)
@@ -366,11 +368,11 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
     }
 
 	// print loss intervals
-	for (int count = 0; count < 8; count++)
+	/*for (int count = 0; count < 8; count++)
 	{
 		printf("%d ", lossIntervals[count]);
 	}
-	printf("\n");
+	printf("\n");*/
 	//FREE PACKET
  	delete hdr_sctp::access(opInPkt)->SctpTrace();
  	hdr_sctp::access(opInPkt)->SctpTrace() = NULL;
@@ -617,14 +619,40 @@ void SctpRateHybrid::nextpkt(){
 		pktQ_.spTail = NULL;
 	}
 
+	// traverse send buffer
+	Node_S *spCurrNode = sSendBuffer.spHead;
+	SctpSendBufferNode_S *spCurrNodeData = NULL;
+
+	if(sSendBuffer.uiLength > 0)
+	{
+		for(int i = 0; i < sendBufferIndex; i++){
+			spCurrNode = spCurrNode->spNext;
+		}
+	}
+
+	// assign timestamp
+	spCurrNodedata = (SctpSendBufferNode_S *) spCurrNode->vpData;
+	spCurrNodeData->dTxTimestamp = spCurrNodeData->dTxTimestamp != 0 ? Scheduler::instance().clock() : 0;
+
 	if (eState == SCTP_STATE_ESTABLISHED) {
 		/* Get TFRC chunk */
 		Packet *pktToSend = (Packet *) node->vpData;
 		PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
 		SctpTfrcChunk_S *firstChunk = (SctpTfrcChunk_S *) pktToSendData->data(); // TFRC chunk is always the 1st chunk
 
+		if(noRtt){
+			rtt_ = 0.209112;
+			noRtt = false;
+		}
+		else
+		{
+			rtt_ = spReplyDest->dSrtt;
+		}
+
+		//printf("rtt_: %lf\n", rtt_);
 		/* Add TFRC details */	
 		firstChunk->timestamp = Scheduler::instance().clock();
+		//printf("ts: %lf\n", firstChunk->timestamp);
 		firstChunk->rtt = rtt_;
 		firstChunk->seqno = ++seqno_;
 		firstChunk->tzero=tzero_;
@@ -1321,4 +1349,188 @@ void SctpRateHybrid::Timeout(SctpChunkType_E eChunkType, SctpDest_S *spDest)
 	
 	SendHeartbeat(spDest);
     }
+}
+
+/* Go thru the send buffer deleting all chunks which have a tsn <= the 
+ * tsn parameter passed in. We assume the chunks in the rtx list are ordered by
+ * their tsn value. In addtion, for each chunk deleted:
+ *   1. we add the chunk length to # newly acked bytes and partial bytes acked
+ *   2. we update round trip time if appropriate
+ *   3. stop the timer if the chunk's destination timer is running
+ */
+void SctpRateHybrid::SendBufferDequeueUpTo(u_int uiTsn)
+{
+  Node_S *spDeleteNode = NULL;
+  Node_S *spCurrNode = sSendBuffer.spHead;
+  SctpSendBufferNode_S *spCurrNodeData = NULL;
+
+  /* PN: 5/2007. Simulate send window */
+  u_short usChunkSize = 0;
+  char cpOutString[500];
+  iAssocErrorCount = 0;
+
+  while(spCurrNode != NULL &&
+	((SctpSendBufferNode_S*)spCurrNode->vpData)->spChunk->uiTsn <= uiTsn)
+    {
+      spCurrNodeData = (SctpSendBufferNode_S *) spCurrNode->vpData;
+
+      /* Only count this chunk as newly acked and towards partial bytes
+       * acked if it hasn't been gap acked or marked as ack'd due to rtx
+       * limit.  
+       */
+      if((spCurrNodeData->eGapAcked == FALSE) &&
+	 (spCurrNodeData->eAdvancedAcked == FALSE) )
+	{
+	  uiHighestTsnNewlyAcked = spCurrNodeData->spChunk->uiTsn;
+
+	  spCurrNodeData->spDest->iNumNewlyAckedBytes 
+	    += spCurrNodeData->spChunk->sHdr.usLength;
+
+	  /* only add to partial bytes acked if we are in congestion
+	   * avoidance mode and if there was cwnd amount of data
+	   * outstanding on the destination (implementor's guide) 
+	   */
+	  if(spCurrNodeData->spDest->iCwnd >spCurrNodeData->spDest->iSsthresh 
+	     &&
+	     ( spCurrNodeData->spDest->iOutstandingBytes 
+	       >= spCurrNodeData->spDest->iCwnd) )
+	    {
+	      spCurrNodeData->spDest->iPartialBytesAcked 
+		+= spCurrNodeData->spChunk->sHdr.usLength;
+	    }
+	}
+
+      /* This is to ensure that Max.Burst is applied when a SACK
+       * acknowledges a chunk which has been fast retransmitted. If it is
+       * ineligible for fast rtx, that can only be because it was fast
+       * rtxed or it timed out. If it timed out, a burst shouldn't be
+       * possible, but shouldn't hurt either. The fast rtx case is what we
+       * are really after. This is a proposed change to RFC2960 section
+       * 7.2.4
+       */
+      if(spCurrNodeData->eIneligibleForFastRtx == TRUE)
+	eApplyMaxBurst = TRUE;
+	    
+      /* We update the RTT estimate if the following hold true:
+       *   1. RTO pending flag is set (6.3.1.C4 measured once per round trip)
+       *   2. Timestamp is set for this chunk(ie, we were measuring this chunk)
+       *   3. This chunk has not been retransmitted
+       *   4. This chunk has not been gap acked already 
+       *   5. This chunk has not been advanced acked (pr-sctp: exhausted rtxs)
+       */
+      if(spCurrNodeData->spDest->eRtoPending == TRUE &&
+	 spCurrNodeData->dTxTimestamp > 0 &&
+	 spCurrNodeData->iNumTxs == 1 &&
+	 spCurrNodeData->eGapAcked == FALSE &&
+	 spCurrNodeData->eAdvancedAcked == FALSE) 
+	{
+	  /* If the chunk is marked for timeout rtx, then the sender is an 
+	   * ambigious state. Were the sacks lost or was there a failure? 
+	   * (See below, where we talk about error count resetting)
+	   * Since we don't clear the error counter below, we also don't
+	   * update the RTT. This could be a problem for late arriving SACKs.
+	   */
+		if(spCurrNodeData->eMarkedForRtx != TIMEOUT_RTX)
+		{
+			RttUpdate(spCurrNodeData->dTxTimestamp, 
+					spCurrNodeData->spDest);
+			spCurrNodeData->spDest->eRtoPending = FALSE;
+		}
+	}
+
+      /* if there is a timer running on the chunk's destination, then stop it
+       */
+      if(spCurrNodeData->spDest->eRtxTimerIsRunning == TRUE)
+	StopT3RtxTimer(spCurrNodeData->spDest);
+
+      /* We don't want to clear the error counter if it's cleared already;
+       * otherwise, we'll unnecessarily trigger a trace event.
+       *
+       * Also, the error counter is cleared by SACKed data ONLY if the
+       * TSNs are not marked for timeout retransmission and has not been
+       * gap acked before. Without this condition, we can run into a
+       * problem for failure detection. When a failure occurs, some data
+       * may have made it through before the failure, but the sacks got
+       * lost. When the sender retransmits the first outstanding, the
+       * receiver will sack all the data whose sacks got lost. We don't
+       * want these sacks to clear the error counter, or else failover
+       * would take longer.
+       */
+      if(spCurrNodeData->spDest->iErrorCount != 0 &&
+	 spCurrNodeData->eMarkedForRtx != TIMEOUT_RTX &&
+	 spCurrNodeData->eGapAcked == FALSE)
+	{
+	  spCurrNodeData->spDest->iErrorCount = 0; // clear error counter
+	  tiErrorCount++;                          // ... and trace it too!
+	  spCurrNodeData->spDest->eStatus = SCTP_DEST_STATUS_ACTIVE;
+	  if(spCurrNodeData->spDest == spPrimaryDest &&
+	     spNewTxDest != spPrimaryDest) 
+	    {
+	      spNewTxDest = spPrimaryDest; // return to primary
+	    }
+	}
+
+      /* PN: 5/2007. Simulate send window */
+      usChunkSize = spCurrNodeData->spChunk->sHdr.usLength;
+      
+      spDeleteNode = spCurrNode;
+      spCurrNode = spCurrNode->spNext;
+      DeleteNode(&sSendBuffer, spDeleteNode);
+			sendBufferIndex--;
+      spDeleteNode = NULL;
+
+      /* PN: 5/2007. Simulate send window */
+      if (uiInitialSwnd) 
+      {
+        uiAvailSwnd += usChunkSize;
+      }
+
+    }
+
+  if (channel_)
+        (void)Tcl_Write(channel_, cpOutString, strlen(cpOutString));
+}
+
+void SctpRateHybrid::AddToSendBuffer(SctpDataChunkHdr_S *spChunk, 
+				int iChunkSize,
+				u_int uiReliability,
+				SctpDest_S *spDest)
+{
+  Node_S *spNewNode = new Node_S;
+  spNewNode->eType = NODE_TYPE_SEND_BUFFER;
+  spNewNode->vpData = new SctpSendBufferNode_S;
+
+  SctpSendBufferNode_S * spNewNodeData 
+    = (SctpSendBufferNode_S *) spNewNode->vpData;
+
+  /* This can NOT simply be a 'new SctpDataChunkHdr_S', because we need to
+   * allocate the space for the ENTIRE data chunk and not just the data
+   * chunk header.  
+   */
+  spNewNodeData->spChunk = (SctpDataChunkHdr_S *) new u_char[iChunkSize];
+  memcpy(spNewNodeData->spChunk, spChunk, iChunkSize);
+
+  spNewNodeData->eAdvancedAcked = FALSE;
+  spNewNodeData->eGapAcked = FALSE;
+  spNewNodeData->eAddedToPartialBytesAcked = FALSE;
+  spNewNodeData->iNumMissingReports = 0;
+  spNewNodeData->iUnrelRtxLimit = uiReliability;
+  spNewNodeData->eMarkedForRtx = NO_RTX;
+  spNewNodeData->eIneligibleForFastRtx = FALSE;
+  spNewNodeData->iNumTxs = 1;
+  spNewNodeData->spDest = spDest;
+
+  /* Is there already a DATA chunk in flight measuring an RTT? 
+   * (6.3.1.C4 RTT measured once per round trip)
+   */
+  if(spDest->eRtoPending == FALSE)  // NO?
+    {
+      spNewNodeData->dTxTimestamp = Scheduler::instance().clock();
+      spDest->eRtoPending = TRUE;   // ...well now there is :-)
+    }
+  else
+    spNewNodeData->dTxTimestamp = 0; // don't use this check for RTT estimate
+
+  InsertNode(&sSendBuffer, sSendBuffer.spTail, spNewNode, NULL);
+	sendBufferIndex++;
 }
