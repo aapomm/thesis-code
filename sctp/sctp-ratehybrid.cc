@@ -619,19 +619,10 @@ void SctpRateHybrid::nextpkt(){
 		pktQ_.spTail = NULL;
 	}
 
-	// traverse send buffer
-	Node_S *spCurrNode = sSendBuffer.spHead;
 	SctpSendBufferNode_S *spCurrNodeData = NULL;
 
-	if(sSendBuffer.uiLength > 0)
-	{
-		for(int i = 0; i < sendBufferIndex; i++){
-			spCurrNode = spCurrNode->spNext;
-		}
-	}
-
 	// assign timestamp
-	spCurrNodedata = (SctpSendBufferNode_S *) spCurrNode->vpData;
+	spCurrNodeData = (SctpSendBufferNode_S *) node->vpData;
 	spCurrNodeData->dTxTimestamp = spCurrNodeData->dTxTimestamp != 0 ? Scheduler::instance().clock() : 0;
 
 	if (eState == SCTP_STATE_ESTABLISHED) {
