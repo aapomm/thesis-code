@@ -42,7 +42,7 @@ protected:
 	virtual void SendMuch();
 	virtual bool askPerm();
 	virtual void cancelTimer();
-	virtual void TfrcUpdate(u_char *);
+	virtual void TfrcUpdate(u_char *, double);
 	virtual void addToList(Packet *p);
 	virtual void FastRtx();
 	virtual int BundleControlChunks(u_char *);

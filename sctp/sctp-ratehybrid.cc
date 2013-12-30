@@ -379,53 +379,61 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
  	delete [] ucpOutData;
 }
 
-void SctpRateHybrid::TfrcUpdate(u_char *ucpInChunk){
+void SctpRateHybrid::TfrcUpdate(u_char *ucpInChunk, double p){
     /* 
    		TFRC INTEGRATION
     */
-	double now = Scheduler::instance().clock();
-	//Extract SCTP headers for TFRC calculation
-	SctpTfrcAckChunk_S *nck = (SctpTfrcAckChunk_S *) ucpInChunk;
-	//double ts = nck->timestamp_echo;
-	double ts = nck->timestamp_echo + nck->timestamp_offset;
-	double rate_since_last_report = nck->rate_since_last_report;
-	// printf("tfrc rslr: %lf\n", rate_since_last_report);
-	// double NumFeedback_ = nck->NumFeedback_;
-	double flost = nck->flost; 
-	int losses = nck->losses;
-	true_loss_rate_ = nck->true_loss;
+  double now = Scheduler::instance().clock();
+  double flost = 0;
+  if (ucpInChunk != NULL && p < 0) {
+		//Extract SCTP headers for TFRC calculation
+		SctpTfrcAckChunk_S *nck = (SctpTfrcAckChunk_S *) ucpInChunk;
+		//double ts = nck->timestamp_echo;
+		double ts = nck->timestamp_echo + nck->timestamp_offset;
+		double rate_since_last_report = nck->rate_since_last_report;
+		// printf("tfrc rslr: %lf\n", rate_since_last_report);
+		// double NumFeedback_ = nck->NumFeedback_;
+		flost = nck->flost; 
+		int losses = nck->losses;
+		true_loss_rate_ = nck->true_loss;
 
-	round_id ++;
+		round_id ++;
 
-	if (round_id > 1 && rate_since_last_report > 0) {
-		/* compute the max rate for slow-start as two times rcv rate */ 
-		ss_maxrate_ = 2*rate_since_last_report*size_;
-		// printf("ratehybrid ss_maxrate_: %lf\n", ss_maxrate_);
-		if (conservative_) { 
-			if (losses >= 1) {
-				/* there was a loss in the most recent RTT */
-				if (debug_) printf("time: %5.2f losses: %d rate %5.2f\n", 
-				  now, losses, rate_since_last_report);
-				maxrate_ = rate_since_last_report*size_;
-			} else { 
-				/* there was no loss in the most recent RTT */
-				maxrate_ = scmult_*rate_since_last_report*size_;
-			}
-			// if (debug_) printf("time: %5.2f losses: %d rate %5.2f maxrate: %5.2f\n", now, losses, rate_since_last_report, maxrate_);
-		} else 
-			maxrate_ = 2*rate_since_last_report*size_;
-	} else {
-		ss_maxrate_ = 0;
-		maxrate_ = 0; 
-	}
+		if (round_id > 1 && rate_since_last_report > 0) {
+			/* compute the max rate for slow-start as two times rcv rate */ 
+			ss_maxrate_ = 2*rate_since_last_report*size_;
+			// printf("ratehybrid ss_maxrate_: %lf\n", ss_maxrate_);
+			if (conservative_) { 
+				if (losses >= 1) {
+					/* there was a loss in the most recent RTT */
+					if (debug_) printf("time: %5.2f losses: %d rate %5.2f\n", 
+					  now, losses, rate_since_last_report);
+					maxrate_ = rate_since_last_report*size_;
+				} else { 
+					/* there was no loss in the most recent RTT */
+					maxrate_ = scmult_*rate_since_last_report*size_;
+				}
+				// if (debug_) printf("time: %5.2f losses: %d rate %5.2f maxrate: %5.2f\n", now, losses, rate_since_last_report, maxrate_);
+			} else 
+				maxrate_ = 2*rate_since_last_report*size_;
+		} else {
+			ss_maxrate_ = 0;
+			maxrate_ = 0; 
+		}
 
-	/* update the round trip time */
-	// if(ts == 0){
-	// 	ts = now - 0.04;
-	// }
-	// printf("ratehybrid ts: %lf\n", ts);
-	// getchar();
-	update_rtt (ts, now);
+		/* update the round trip time */
+		// if(ts == 0){
+		// 	ts = now - 0.04;
+		// }
+		// printf("ratehybrid ts: %lf\n", ts);
+		// getchar();
+		update_rtt (ts, now);
+  }
+  else if (ucpInChunk == NULL && p > 0) {
+  	flost = p;
+  	p = -1;
+  }
+
 
 	rcvrate = p_to_b(flost, rtt_, tzero_, fsize_, bval_);
   if(rate_ == 0.00) rate_ = 1.00;
@@ -922,7 +930,7 @@ void SctpRateHybrid::ProcessOptionChunk(u_char *ucpInChunk)
 		switch( ((SctpChunkHdr_S *) ucpInChunk)->ucType)
 		{
 			case SCTP_CHUNK_TFRC_ACK:
-				TfrcUpdate(ucpInChunk);	
+				TfrcUpdate(ucpInChunk, -1);	
 				break;
 		}
 	}
@@ -1003,6 +1011,7 @@ void SctpRateHybrid::FastRtx()
 		printf("p: %lf\n", 1 / I_mean);
 		p_ = 1 / I_mean;
 
+		TfrcUpdate(NULL, p_);
 
 	  spCurrBuffData->spDest->iPartialBytesAcked = 0; //reset
 	  tiCwnd++; // trigger changes for trace to pick up
