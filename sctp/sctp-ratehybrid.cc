@@ -387,6 +387,7 @@ void SctpRateHybrid::TfrcUpdate(u_char *ucpInChunk, double p){
   double now = Scheduler::instance().clock();
   double flost = 0;
   if (ucpInChunk != NULL && p < 0) {
+		rtt_ = spReplyDest->dSrtt;
 		//Extract SCTP headers for TFRC calculation
 		SctpTfrcAckChunk_S *nck = (SctpTfrcAckChunk_S *) ucpInChunk;
 		//double ts = nck->timestamp_echo;
@@ -428,7 +429,7 @@ void SctpRateHybrid::TfrcUpdate(u_char *ucpInChunk, double p){
 		// }
 		// printf("ratehybrid ts: %lf\n", ts);
 		// getchar();
-		update_rtt (ts, now);
+		//update_rtt (ts, now);
   }
   else if (ucpInChunk == NULL && p > 0) {
   	flost = p;
@@ -625,7 +626,8 @@ void SctpRateHybrid::nextpkt(){
 	if(sSendBuffer.uiLength > 0)
 	{
 		spCurrNodeData = (SctpSendBufferNode_S *) spCurrNode->vpData;
-		spCurrNodeData->dTxTimestamp = spCurrNodeData->dTxTimestamp != 0 ? Scheduler::instance().clock() : 0;
+		if(spCurrNodeData->dTxTimestamp != 0)
+			spCurrNodeData->dTxTimestamp = Scheduler::instance().clock();
 	}
 	if (eState == SCTP_STATE_ESTABLISHED) {
 		/* Get TFRC chunk */
@@ -633,10 +635,11 @@ void SctpRateHybrid::nextpkt(){
 		PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
 		SctpTfrcChunk_S *firstChunk = (SctpTfrcChunk_S *) pktToSendData->data(); // TFRC chunk is always the 1st chunk
 
+		rtt_ = spReplyDest->dSrtt;
+
 		/* Add TFRC details */	
 		firstChunk->timestamp = Scheduler::instance().clock();
-		firstChunk->rtt = spReplyDest->dSrtt;
-		//firstChunk->rtt = rtt_;
+		firstChunk->rtt = rtt_;
 		firstChunk->seqno = ++seqno_;
 		firstChunk->tzero=tzero_;
 		firstChunk->rate=rate_;
