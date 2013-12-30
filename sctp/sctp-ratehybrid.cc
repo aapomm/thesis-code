@@ -98,6 +98,8 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 	sendData_ = 0;
 	firstSend = 0;
 	noRtt = true;
+
+	p_ = -1;
 }
 
 SctpRateHybrid::~SctpRateHybrid(){
@@ -999,6 +1001,8 @@ void SctpRateHybrid::FastRtx()
 		double I_tot = MAX(I_tot0, I_tot1);
 		double I_mean = I_tot / W_tot;
 		printf("p: %lf\n", 1 / I_mean);
+		p_ = 1 / I_mean;
+
 
 	  spCurrBuffData->spDest->iPartialBytesAcked = 0; //reset
 	  tiCwnd++; // trigger changes for trace to pick up

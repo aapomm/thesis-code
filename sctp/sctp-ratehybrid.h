@@ -135,6 +135,8 @@ protected:
 	int sendData_; // are we sending data right now?
 	int slow_increase_;
 	int ca_;
+
+	double p_;
 	/* end of TFRC integration variables
 	*/
 
