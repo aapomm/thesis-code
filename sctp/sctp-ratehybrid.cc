@@ -29,7 +29,7 @@ SendTimer::SendTimer(SctpRateHybrid *agent) : TimerHandler(){
 	agent_ = agent;
 }
 
-SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
+SctpRateHybrid::SctpRateHybrid() : SctpAgent()
 {
 	bind("packetSize_", &size_);
 	bind("rate_", &rate_);
@@ -104,14 +104,6 @@ SctpRateHybrid::~SctpRateHybrid(){
 	cancelTimer();
 
 	delete timer_send;
-}
-
-void SctpTfrcNoFeedbackTimer::expire(Event *) {
-	a_->reduce_rate_on_no_feedback (spDest);
-}
-
-void SctpTfrcNoFeedbackTimer::setDest(SctpDest_S *d) {
-	spDest = d;
 }
 
 void SctpRateHybrid::delay_bind_init_all()
@@ -434,12 +426,7 @@ void SctpRateHybrid::TfrcUpdate(u_char *ucpInChunk){
 	update_rtt (ts, now);
 
 	rcvrate = p_to_b(flost, rtt_, tzero_, fsize_, bval_);
-	/* if we get no more feedback for some time, cut rate in half */
-	double t = 2*rtt_ ; 
   if(rate_ == 0.00) rate_ = 1.00;
-	if (t < 2*size_/rate_) 
-		t = 2*size_/rate_ ; 
-	NoFeedbacktimer_.resched(t);
 	
 	/* if we are in slow start and we just saw a loss */
 	/* then come out of slow start */
@@ -582,7 +569,7 @@ double SctpRateHybrid::rfc3390(int size)
         }
 }
 
-void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
+void SctpRateHybrid::reduce_rate_on_no_feedback()
 {
 	// double now = Scheduler::instance().clock();
 	// Assumption: Datalimited and/or all_idle_
@@ -595,20 +582,6 @@ void SctpRateHybrid::reduce_rate_on_no_feedback(SctpDest_S *spDest)
   } else if ( rate_ > rfc3390(uiMaxPayloadSize) * uiMaxPayloadSize/rtt_ ) {
           rate_ = rfc3390(uiMaxPayloadSize) * uiMaxPayloadSize/rtt_;
   }	
-	UrgentFlag = 1;
-	round_id ++ ;
-	double t = 2*rtt_ ; 
-	// Set the nofeedback timer.
-	if (t < 2*uiMaxPayloadSize/rate_) 
-		t = 2*uiMaxPayloadSize/rate_ ; 
-	NoFeedbacktimer_.resched(t);
-	/*
-	if (datalimited_) {
-		all_idle_ = 1;
-		if (debug_) printf("Time: %5.2f Datalimited now.\n", now);
-	}
-	*/
-	nextpkt();
 }
 
 void SctpRateHybrid::nextpkt(){
@@ -1222,4 +1195,117 @@ void SctpRateHybrid::shift_array(double *a, int sz, double defval) {
 		a[i+1] = a[i] ;
 	}
 	a[0] = defval;
+}
+
+/* Handles timeouts for both DATA chunks and HEARTBEAT chunks. The actions are
+ * slightly different for each. Covers rfc sections 6.3.3 and 8.3.
+ */
+void SctpRateHybrid::Timeout(SctpChunkType_E eChunkType, SctpDest_S *spDest)
+{
+  double dCurrTime = Scheduler::instance().clock();
+
+  if(eChunkType == SCTP_CHUNK_DATA)
+    {
+      spDest->eRtxTimerIsRunning = FALSE;
+      
+      /* Lukasz Budzisz : 03/09/2006 
+       * Section 7.2.3 of rfc4960
+       * NE: 4/29/2007 - This conditioal is used for some reason but for 
+       * now we dont know why. 
+       */
+      if(spDest->iCwnd > 1 * (int) uiMaxDataSize)
+	{
+	  spDest->iSsthresh 
+	    = MAX(spDest->iCwnd/2, 4 * (int) uiMaxDataSize);
+	  spDest->iCwnd = 1*uiMaxDataSize;
+	  spDest->iPartialBytesAcked = 0; // reset
+	  tiCwnd++; // trigger changes for trace to pick up
+	}
+
+      spDest->opCwndDegradeTimer->force_cancel();
+
+      /* Cancel any pending RTT measurement on this destination. Stephan
+       * Baucke suggested (2004-04-27) this action as a fix for the
+       * following simple scenario:
+       *
+       * - Host A sends packets 1, 2 and 3 to host B, and choses 3 for
+       *   an RTT measurement
+       *
+       * - Host B receives all packets correctly and sends ACK1, ACK2,
+       *   and ACK3.
+       *
+       * - ACK2 and ACK3 are lost on the return path
+       *
+       * - Eventually a timeout fires for packet 2, and A retransmits 2
+       *
+       * - Upon receipt of 2, B sends a cumulative ACK3 (since it has
+       *   received 2 & 3 before)
+       *
+       * - Since packet 3 has never been retransmitted, the SCTP code
+       *   actually accepts the ACK for an RTT measurement, although it
+       *   was sent in reply to the retransmission of 2, which results
+       *   in a much too high RTT estimate. Since this case tends to
+       *   happen in case of longer link interruptions, the error is
+       *   often amplified by subsequent timer backoffs.
+       */
+      spDest->eRtoPending = FALSE; // cancel any pending RTT measurement
+
+			// TFRC no feedback expire
+			reduce_rate_on_no_feedback();
+    }
+
+  spDest->dRto *= 2;    // back off the timer
+  if(spDest->dRto > dMaxRto)
+    spDest->dRto = dMaxRto;
+  tdRto++;              // trigger changes for trace to pick up
+
+  spDest->iTimeoutCount++;
+  spDest->iErrorCount++; // @@@ window probe timeouts should not be counted
+
+  if(spDest->eStatus == SCTP_DEST_STATUS_ACTIVE)
+    {  
+      iAssocErrorCount++;
+
+      // Path.Max.Retrans exceeded?
+      if(spDest->iErrorCount > (int) uiPathMaxRetrans) 
+	{
+	  spDest->eStatus = SCTP_DEST_STATUS_INACTIVE;
+	  if(spDest == spNewTxDest)
+	    {
+	      spNewTxDest = GetNextDest(spDest);
+	    }
+	}
+      if(iAssocErrorCount > (int) uiAssociationMaxRetrans)
+	{
+	  /* abruptly close the association!  (section 8.1)
+	   */
+	  Close();
+	  return;
+	}
+    }
+
+  // trace it!
+  tiTimeoutCount++;
+  tiErrorCount++;       
+
+  if(spDest->iErrorCount > (int) uiChangePrimaryThresh &&
+     spDest == spPrimaryDest)
+    {
+      spPrimaryDest = spNewTxDest;
+    }
+
+  if(eChunkType == SCTP_CHUNK_DATA)
+    {
+      TimeoutRtx(spDest);
+      if(spDest->eStatus == SCTP_DEST_STATUS_INACTIVE && 
+	 uiHeartbeatInterval!=0)
+	SendHeartbeat(spDest);  // just marked inactive, so send HB immediately
+    }
+  else if(eChunkType == SCTP_CHUNK_HB)
+    {
+      if( (uiHeartbeatInterval != 0) ||
+	  (spDest->eStatus == SCTP_DEST_STATUS_UNCONFIRMED))
+	
+	SendHeartbeat(spDest);
+    }
 }

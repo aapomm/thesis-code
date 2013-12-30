@@ -26,16 +26,6 @@ protected:
 	SctpRateHybrid *agent_;
 };
 
-class SctpTfrcNoFeedbackTimer : public TimerHandler {
-public:
-		SctpTfrcNoFeedbackTimer(SctpRateHybrid *a) : TimerHandler() { a_ = a;}
-		virtual void expire(Event *e);
-		virtual void setDest(SctpDest_S *d);
-protected:
-		SctpRateHybrid *a_;
-		SctpDest_S  *spDest;
-}; 
-
 class SctpRateHybrid : public SctpAgent {
 
 private:
@@ -58,6 +48,7 @@ protected:
 	virtual int BundleControlChunks(u_char *);
 	virtual void ProcessOptionChunk(u_char *);
 	virtual void ProcessSackChunk(u_char *);
+	virtual void Timeout(SctpChunkType_E, SctpDest_S *);
 	void shift_array(int *a, int sz, int defval);
 	void shift_array(double *a, int sz, double defval);
   // virtual void recv(Packet *pkt, Handler*);
@@ -136,7 +127,6 @@ protected:
 
 	int UrgentFlag;		// urgent flag
 	double overhead_;
-	SctpTfrcNoFeedbackTimer NoFeedbacktimer_;
 
 	double delta_;
 	int printStatus_;
@@ -152,7 +142,7 @@ public:
 	SctpRateHybrid();
 	~SctpRateHybrid();
 
-	virtual void reduce_rate_on_no_feedback(SctpDest_S *spDest);
+	virtual void reduce_rate_on_no_feedback();
 	virtual void  recv(Packet *pkt, Handler*);
 	double rfc3390(int size);
 	virtual void  update_rtt(double tao, double now);	
