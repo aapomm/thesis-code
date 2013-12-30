@@ -635,7 +635,6 @@ void SctpRateHybrid::nextpkt(){
 		PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
 		SctpTfrcChunk_S *firstChunk = (SctpTfrcChunk_S *) pktToSendData->data(); // TFRC chunk is always the 1st chunk
 
-		rtt_ = spReplyDest->dSrtt;
 
 		/* Add TFRC details */	
 		firstChunk->timestamp = Scheduler::instance().clock();
