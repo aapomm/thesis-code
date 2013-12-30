@@ -315,8 +315,7 @@ void SctpRateHybrid::recv(Packet *opInPkt, Handler*){
 
  	if (noRtt) {
  		rtt_ = Scheduler::instance().clock() - firstSend;
-		printf("%lf\n", rtt_);
- 		//noRtt = false;
+ 		noRtt = false;
  	}
 
   if(hdr_sctp::access(opInPkt)->NumChunks() > 0)
@@ -619,32 +618,25 @@ void SctpRateHybrid::nextpkt(){
 		pktQ_.spTail = NULL;
 	}
 
+	Node_S *spCurrNode = sSendBuffer.spHead;
 	SctpSendBufferNode_S *spCurrNodeData = NULL;
 
 	// assign timestamp
-	spCurrNodeData = (SctpSendBufferNode_S *) node->vpData;
-	spCurrNodeData->dTxTimestamp = spCurrNodeData->dTxTimestamp != 0 ? Scheduler::instance().clock() : 0;
-
+	if(sSendBuffer.uiLength > 0)
+	{
+		spCurrNodeData = (SctpSendBufferNode_S *) spCurrNode->vpData;
+		spCurrNodeData->dTxTimestamp = spCurrNodeData->dTxTimestamp != 0 ? Scheduler::instance().clock() : 0;
+	}
 	if (eState == SCTP_STATE_ESTABLISHED) {
 		/* Get TFRC chunk */
 		Packet *pktToSend = (Packet *) node->vpData;
 		PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
 		SctpTfrcChunk_S *firstChunk = (SctpTfrcChunk_S *) pktToSendData->data(); // TFRC chunk is always the 1st chunk
 
-		if(noRtt){
-			rtt_ = 0.209112;
-			noRtt = false;
-		}
-		else
-		{
-			rtt_ = spReplyDest->dSrtt;
-		}
-
-		//printf("rtt_: %lf\n", rtt_);
 		/* Add TFRC details */	
 		firstChunk->timestamp = Scheduler::instance().clock();
-		//printf("ts: %lf\n", firstChunk->timestamp);
-		firstChunk->rtt = rtt_;
+		firstChunk->rtt = spReplyDest->dSrtt;
+		//firstChunk->rtt = rtt_;
 		firstChunk->seqno = ++seqno_;
 		firstChunk->tzero=tzero_;
 		firstChunk->rate=rate_;
