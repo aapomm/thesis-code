@@ -21,7 +21,7 @@ BEGIN {
 
   if (time < nxt_time_instance)
     { 
-      if (action == "r")
+      if ((action == "r") && (to == 1))
       {
         total_size1 += pkt_size;
         bytes_recvd1 += 1;
