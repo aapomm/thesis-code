@@ -20,7 +20,7 @@ $ns duplex-link $bottleneck1 $bottleneck2 5Mb 20ms DropTail
 $ns queue-limit $bottleneck1 $bottleneck2 300
 
 # create tcp nodes and agents
-for {set i 0} {$i < 8} {incr i} {
+for {set i 0} {$i < 2} {incr i} {
 	# source
 	set tcp_src_n($i) [$ns node]	
 	set tcp_src($i) [new Agent/TCP/Sack1]
@@ -40,7 +40,7 @@ for {set i 0} {$i < 8} {incr i} {
 }
 
 # create 8 (hybrid/sctp) nodes
-for {set i 0} {$i < 8} {incr i} {
+for {set i 0} {$i < 2} {incr i} {
 	# source
 	set sctp_src_n($i) [$ns node]
 	set sctp_src($i) [new Agent/SCTP/Ratehybrid]
@@ -78,5 +78,5 @@ for {set i 0} {$i < 2} {incr i} {
 	$ns at 1.0 "$udp_traf($i) start"
 }
 
-$ns at 40.0 "finish"
+$ns at 6.0 "finish"
 $ns run

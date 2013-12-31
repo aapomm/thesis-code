@@ -35,16 +35,16 @@ BEGIN {
   else {
     current_time_instance = nxt_time_instance;
     nxt_time_instance += interval;
-    for (i = 0; i < 16; i++) {
-      printf "%lf %lf\n", current_time_instance, bytes_recvd[i] >> (i + ".out")
-      bytes_recvd[i] = 0;
+    for (i = 0; i < 4; i++) {
+      printf "%lf %lf\n", current_time_instance, bytes_recvd[i + 2] >> (i + ".out")
+      bytes_recvd[i + 2] = 0;
     }
   }
 }
 END {
-  for (i = 0; i < 16; i++) {
-    if (i < 8) tcp_bytes += total_size[i];
-    else hybrid_bytes += total_size[i];
+  for (i = 0; i < 4; i++) {
+    if (i < 2) tcp_bytes += total_size[i + 2];
+    else hybrid_bytes += total_size[i + 2];
   }
   printf("Fairness: %lf\n", hybrid_bytes / (tcp_bytes + hybrid_bytes));
 }
