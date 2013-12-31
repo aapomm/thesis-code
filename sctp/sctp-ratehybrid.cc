@@ -388,86 +388,91 @@ void SctpRateHybrid::TfrcUpdate(u_char *ucpInChunk){
 	SctpTfrcAckChunk_S *nck = (SctpTfrcAckChunk_S *) ucpInChunk;
 	//double ts = nck->timestamp_echo;
 	double ts = nck->timestamp_echo + nck->timestamp_offset;
-	double rate_since_last_report = nck->rate_since_last_report;
-	// printf("tfrc rslr: %lf\n", rate_since_last_report);
-	// double NumFeedback_ = nck->NumFeedback_;
-	double flost = nck->flost; 
-	int losses = nck->losses;
-	true_loss_rate_ = nck->true_loss;
+	if(ts > 0)
+	{
+		double rate_since_last_report = nck->rate_since_last_report;
+		// printf("tfrc rslr: %lf\n", rate_since_last_report);
+		// double NumFeedback_ = nck->NumFeedback_;
+		double flost = nck->flost; 
+		int losses = nck->losses;
+		true_loss_rate_ = nck->true_loss;
 
-	round_id ++;
+		round_id ++;
 
-	if (round_id > 1 && rate_since_last_report > 0) {
-		/* compute the max rate for slow-start as two times rcv rate */ 
-		ss_maxrate_ = 2*rate_since_last_report*size_;
-		// printf("ratehybrid ss_maxrate_: %lf\n", ss_maxrate_);
-		if (conservative_) { 
-			if (losses >= 1) {
-				/* there was a loss in the most recent RTT */
-				if (debug_) printf("time: %5.2f losses: %d rate %5.2f\n", 
-				  now, losses, rate_since_last_report);
-				maxrate_ = rate_since_last_report*size_;
-			} else { 
-				/* there was no loss in the most recent RTT */
-				maxrate_ = scmult_*rate_since_last_report*size_;
-			}
-			// if (debug_) printf("time: %5.2f losses: %d rate %5.2f maxrate: %5.2f\n", now, losses, rate_since_last_report, maxrate_);
-		} else 
-			maxrate_ = 2*rate_since_last_report*size_;
-	} else {
-		ss_maxrate_ = 0;
-		maxrate_ = 0; 
-	}
+		if (round_id > 1 && rate_since_last_report > 0) {
+			/* compute the max rate for slow-start as two times rcv rate */ 
+			ss_maxrate_ = 2*rate_since_last_report*size_;
+			// printf("ratehybrid ss_maxrate_: %lf\n", ss_maxrate_);
+			if (conservative_) { 
+				if (losses >= 1) {
+					/* there was a loss in the most recent RTT */
+					if (debug_) printf("time: %5.2f losses: %d rate %5.2f\n", 
+							now, losses, rate_since_last_report);
+					maxrate_ = rate_since_last_report*size_;
+				} else { 
+					/* there was no loss in the most recent RTT */
+					maxrate_ = scmult_*rate_since_last_report*size_;
+				}
+				// if (debug_) printf("time: %5.2f losses: %d rate %5.2f maxrate: %5.2f\n", now, losses, rate_since_last_report, maxrate_);
+			} else 
+				maxrate_ = 2*rate_since_last_report*size_;
+		} else {
+			ss_maxrate_ = 0;
+			maxrate_ = 0; 
+		}
 
-	/* update the round trip time */
-	// if(ts == 0){
-	// 	ts = now - 0.04;
-	// }
-	// printf("ratehybrid ts: %lf\n", ts);
-	// getchar();
-	update_rtt (ts, now);
+		/* update the round trip time */
+		// if(ts == 0){
+		// 	ts = now - 0.04;
+		// }
+		// printf("ratehybrid ts: %lf\n", ts);
+		// getchar();
+		update_rtt (ts, now);
 
-	rcvrate = p_to_b(flost, rtt_, tzero_, fsize_, bval_);
-	/* if we get no more feedback for some time, cut rate in half */
-	double t = 2*rtt_ ; 
-  if(rate_ == 0.00) rate_ = 1.00;
-	if (t < 2*size_/rate_) 
-		t = 2*size_/rate_ ; 
-	NoFeedbacktimer_.resched(t);
-	
-	/* if we are in slow start and we just saw a loss */
-	/* then come out of slow start */
-	if (first_pkt_rcvd == 0) {
-		first_pkt_rcvd = 1 ; 
-		slowstart();
-		nextpkt();
-	}
-	else {
-		if (rate_change_ == SLOW_START) {
-			if (flost > 0) {
-				rate_change_ = OUT_OF_SLOW_START;
-				oldrate_ = rate_ = rcvrate;
-			}
-			else {
-				slowstart();
-				nextpkt();
-			}
+		rcvrate = p_to_b(flost, rtt_, tzero_, fsize_, bval_);
+		/* if we get no more feedback for some time, cut rate in half */
+		double t = 2*rtt_ ; 
+		if(rate_ == 0.00) rate_ = 1.00;
+		if (t < 2*size_/rate_) 
+			t = 2*size_/rate_ ; 
+		NoFeedbacktimer_.resched(t);
+
+		/* if we are in slow start and we just saw a loss */
+		/* then come out of slow start */
+		if (first_pkt_rcvd == 0) {
+			first_pkt_rcvd = 1 ; 
+			slowstart();
+			nextpkt();
 		}
 		else {
-			if (rcvrate>rate_)	{
-				increase_rate(flost);
+			if (rate_change_ == SLOW_START) {
+				if (flost > 0) {
+					rate_change_ = OUT_OF_SLOW_START;
+					oldrate_ = rate_ = rcvrate;
+				}
+				else {
+					slowstart();
+					nextpkt();
+				}
 			}
-			else 
-				decrease_rate ();		
+			else {
+				if (rcvrate>rate_)	{
+					increase_rate(flost);
+				}
+				else 
+				{
+					decrease_rate ();		
+				}
+			}
 		}
-	}
-	// bool printStatus_ = true;
-	if (printStatus_) {
-		printf("time: %5.2f rate: %5.2f\n", now, rate_);
-		double packetrate = rate_ * rtt_ / uiMaxPayloadSize;
-		printf("time: %5.2f packetrate: %5.2f\n", now, packetrate);
-		double maxrate = maxrate_ * rtt_ / uiMaxPayloadSize;
-		printf("time: %5.2f maxrate: %5.2f\n", now, maxrate);
+		//bool printStatus_ = true;
+		if (printStatus_) {
+			printf("time: %5.2f rate: %5.2f\n", now, rate_);
+			double packetrate = rate_ * rtt_ / uiMaxPayloadSize;
+			printf("time: %5.2f packetrate: %5.2f\n", now, packetrate);
+			double maxrate = maxrate_ * rtt_ / uiMaxPayloadSize;
+			printf("time: %5.2f maxrate: %5.2f\n", now, maxrate);
+		}
 	}
 }
 
