@@ -32,6 +32,8 @@ for {set i 0} {$i < 8} {incr i} {
 	$ns attach-agent $tcp_snk_n($i) $tcp_snk($i)
 
 	$ns connect $tcp_src($i) $tcp_snk($i)
+
+	$ns at 1.0 "$tcp_traf($i) start"
 }
 
 # create 8 (hybrid/sctp) nodes
@@ -51,6 +53,8 @@ for {set i 0} {$i < 8} {incr i} {
 	$ns attach-agent $sctp_snk_n($i) $sctp_snk($i)
 
 	$ns connect $sctp_src($i) $sctp_snk($i)
+
+	$ns at 1.0 "$sctp_traf($i) start"
 }	
 
 # create 2 udp nodes
@@ -70,4 +74,9 @@ for {set i 0} {$i < 2} {incr i} {
 	$ns attach-agent $udp_snk_n($i) $udp_snk($i)
 
 	$ns connect $udp_src($i) $udp_snk($i)
+
+	$ns at 1.0 "$udp_traf($i) start"
 }
+
+$ns at 6.0 "finish"
+$ns run
