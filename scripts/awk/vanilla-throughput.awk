@@ -30,9 +30,9 @@ BEGIN {
   else {
     current_time_instance = nxt_time_instance;
     nxt_time_instance += interval;
+    printf("%lf %lf\n", current_time_instance, (total_size1*8)/(interval*1000000));
     #printf("%lf %lf\n", current_time_instance, (total_size1*8)/(interval*1000000));
-    #printf("%lf %lf\n", current_time_instance, (total_size1*8)/(interval*1000000));
-    printf("%d %f\n", bytes_recvd1, (total_size1*8)/(interval*1000000));
+#printf("%d %f\n", bytes_recvd1, (total_size1*8)/(interval*1000000));
     total_size1 = 0;
   }
 }
