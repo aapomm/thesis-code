@@ -45,10 +45,10 @@ for {set i 0} {$i < 8} {incr i} {
 	$sctp_traf($i) attach-agent $sctp_src($i) 
 	# sink
 	set sctp_snk_n($i) [$ns node]
-	$ns duplex-link $bottleneck $sctp_snk_n($i)  5Mb 20ms DropTail
+	$ns duplex-link $bottleneck $sctp_snk_n($i) 5Mb 20ms DropTail
 	$ns queue-limit $bottleneck $sctp_snk_n($i) 300
 	set sctp_snk($i) [new Agent/SCTP]
-	$ns attach-agent $sctp_src_n($i) $sctp_src($i)
+	$ns attach-agent $sctp_snk_n($i) $sctp_snk($i)
 
 	$ns connect $sctp_src($i) $sctp_snk($i)
 }	
@@ -60,14 +60,14 @@ for {set i 0} {$i < 2} {incr i} {
 	set udp_src($i) [new Agent/UDP]
 	set udp_traf($i) [new Application/Traffic/CBR]
 	$ns duplex-link $udp_src_n($i) $bottleneck 50Mb 2ms DropTail
-	$ns attach-agent $udp_src_n($i) $sctp_src($i)
+	$ns attach-agent $udp_src_n($i) $udp_src($i)
 	$udp_traf($i) attach-agent $udp_src($i) 
 	# sink
 	set udp_snk_n($i) [$ns node]
 	$ns duplex-link $bottleneck $udp_snk_n($i)  5Mb 20ms DropTail
 	$ns queue-limit $bottleneck $udp_snk_n($i) 300
-	set udp_src($i) [new Agent/Null]
-	$ns attach-agent $sctp_src_n($i) $sctp_src($i)
+	set udp_snk($i) [new Agent/Null]
+	$ns attach-agent $udp_snk_n($i) $udp_snk($i)
 
 	$ns connect $udp_src($i) $udp_snk($i)
 }
