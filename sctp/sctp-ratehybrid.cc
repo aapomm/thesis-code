@@ -64,7 +64,7 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
  	total = 0;
 
  	//test initialization
-	// seqno_=0;				
+	seqno_ = 0;				
  	// rate_ = InitRate_;
  	rate_ = 100000.0;
 	oldrate_ = rate_;  
