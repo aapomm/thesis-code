@@ -55,6 +55,8 @@ SctpRateHybrid::SctpRateHybrid() : SctpAgent(), NoFeedbacktimer_(this)
 	bind_bool("slow_increase_", &slow_increase_);
 	bind_bool("idleFix_", &idleFix_);
 
+  memset(&pktQ_, 0, sizeof(List_S) );
+
 	// printf("isHEADEMPTY? %d\n", pktQ_.spHead == NULL);
 	// printf("isTAILEMPTY? %d\n", pktQ_.spTail == NULL);
 	// printf("length? %d\n", pktQ_.uiLength);
@@ -233,14 +235,14 @@ void SctpRateHybrid::SendPacket(u_char *ucpData, int iDataSize, SctpDest_S *spDe
 
 	  if(dRouteCalcDelay == 0){
 	  		addToList(opPacket);
-	      // send(opPacket, 0);
+	      //send(opPacket, 0);
 	      // timer_send->resched(snd_rate);
 	  }
 	  else{
 	  	if(spDest->eRouteCached == TRUE){
 		  spDest->opRouteCacheFlushTimer->resched(dRouteCacheLifetime);
 		  addToList(opPacket);
-		  // send(opPacket, 0);
+		  //send(opPacket, 0);
 	  	//   timer_send->resched(snd_rate);
 		}
 	    else{
@@ -280,7 +282,7 @@ void SctpRateHybrid::addToList(Packet *p){
 	Node_S *spNewNode= new Node_S;
 	spNewNode->vpData = p;
 
-	if(pktQ_.spTail == NULL)
+  /*if(pktQ_.spTail == NULL)
 		pktQ_.spHead = spNewNode;
 	else
 		pktQ_.spTail->spNext = spNewNode;
@@ -290,7 +292,11 @@ void SctpRateHybrid::addToList(Packet *p){
 
 	pktQ_.spTail = spNewNode;
 
-	pktQ_.uiLength++;
+	pktQ_.uiLength++;*/
+
+  InsertNode(&pktQ_, pktQ_.spTail, spNewNode, NULL);
+
+  printf("length: %d\n", pktQ_.uiLength);
 
   // printf("add! length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
@@ -679,19 +685,20 @@ void SctpRateHybrid::nextpkt(){
 		// printf("ratehybrid next: %d, %lf, %lf\n", uiMaxPayloadSize, xrate, next);
 		next = next*(2*overhead_*Random::uniform()-overhead_+1);
 		if (next > SMALLFLOAT)
+    {
 			timer_send->resched(next);
-        else 
-			timer_send->resched(SMALLFLOAT);
+    }
+    else 
+    {
+      timer_send->resched(SMALLFLOAT);
+    }       
 	}
 	else{
 		timer_send->resched(uiMaxPayloadSize/rate_);
 	}
 
-	// delete (Packet *) node->vpData;
-	node->vpData = NULL;
-	delete node;
+  DeleteNode(&pktQ_, node);
 
-	pktQ_.uiLength--;
 	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
 
@@ -951,3 +958,293 @@ void SctpRateHybrid::ProcessOptionChunk(u_char *ucpInChunk)
 		}
 	}
 }
+
+void SctpRateHybrid::Reset()
+{
+  /* Just in case the user uses the standard ns-2 way of turning on
+   * debugging, we turn on all debugging. However, if the uiDebugMask is
+   * used, then the user knows about SCTP's fine-level debugging control
+   * and the debug_ flag is ignored.
+   */
+  if(debug_ == TRUE && uiDebugMask == 0)
+    uiDebugMask = 0xffffffff;
+
+  /* No debugging output will appear until this is called. Why do we do it
+   * here?  This is the earliest point at which we have the necessary
+   * debugging variables bound from TCL.  
+   */
+
+  if(eState != SCTP_STATE_UNINITIALIZED && eState != SCTP_STATE_CLOSED)
+    Close();  // abruptly close the connection
+
+  /* PN: 5/2007. Simulate send window */
+  uiAvailSwnd = uiInitialSwnd;
+
+  switch(eRtxToAlt)
+    {
+    case RTX_TO_ALT_OFF:
+      break;
+
+    case RTX_TO_ALT_ON:
+      break;
+
+    case RTX_TO_ALT_TIMEOUTS_ONLY:
+      break;
+    }
+
+  switch(eDormantAction)
+    {
+    case DORMANT_HOP:
+      break;
+
+    case DORMANT_PRIMARY:
+      break;
+
+    case DORMANT_LASTDEST:
+      break;
+    }
+
+
+  Node_S *spCurrNode = NULL;
+  SctpDest_S *spCurrDest = NULL;
+  int i;
+
+  if(uiInitialRwnd > MAX_RWND_SIZE)
+    {
+      fprintf(stderr, "SCTP ERROR: initial rwnd (%d) > max (%d)\n",
+	      uiInitialRwnd, MAX_RWND_SIZE);
+      exit(-1);
+    }
+
+  if(uiNumOutStreams > MAX_NUM_STREAMS)
+    {
+      fprintf(stderr, "%s number of streams (%d) > max (%d)\n",
+	      "SCTP ERROR:",
+	      uiNumOutStreams, MAX_NUM_STREAMS);
+      exit(-1);
+    }
+  else if(uiNumUnrelStreams > uiNumOutStreams)
+    {
+      fprintf(stderr, "%s number of unreliable streams (%d) > total (%d)\n",
+	      "SCTP ERROR:",
+	      uiNumUnrelStreams, uiNumOutStreams);
+      exit(-1);
+    }
+
+  uiMaxPayloadSize = uiMtu - SCTP_HDR_SIZE - uiIpHeaderSize;
+  uiMaxDataSize = uiMaxPayloadSize - ControlChunkReservation();
+
+  if(uiDataChunkSize > MAX_DATA_CHUNK_SIZE)
+    {
+      fprintf(stderr, "%s data chunk size (%d) > max (%d)\n",
+	      "SCTP ERROR:",
+	      uiDataChunkSize, MAX_DATA_CHUNK_SIZE);
+      exit(-1);
+    }
+  else if(uiDataChunkSize > uiMaxDataSize)
+    {
+      fprintf(stderr, "SCTP ERROR: DATA chunk size (%d) too big!\n",
+	      uiDataChunkSize);
+      fprintf(stderr, "            SCTP/IP header = %d\n",
+	      SCTP_HDR_SIZE + uiIpHeaderSize);
+      fprintf(stderr, "            Control chunk reservation = %d\n",
+	      ControlChunkReservation());
+      fprintf(stderr, "            MTU = %d\n", uiMtu);
+      fprintf(stderr, "\n");
+
+      exit(-1);
+    }
+  else if(uiDataChunkSize < MIN_DATA_CHUNK_SIZE)
+    {
+      fprintf(stderr, "%s data chunk size (%d) < min (%d)\n",
+	      "SCTP ERROR:",
+	      uiDataChunkSize, MIN_DATA_CHUNK_SIZE);
+      exit(-1);
+    }
+
+  /* size_ is an Agent variable which is normally the packet size, but
+   * SCTP uses size_ to dictate to non-sctp aware applications the max
+   * data size of an application write. If size_ isn't set by SCTP, some
+   * non-sctp aware apps (such as Telnet) will call sendmsg() with 0
+   * bytes.
+   */
+  size_ = uiMtu - SCTP_HDR_SIZE - uiIpHeaderSize - sizeof(SctpDataChunkHdr_S);
+
+  eState = SCTP_STATE_CLOSED;
+  eForceSource = FALSE;
+  iAssocErrorCount = 0;
+
+  if(uiHeartbeatInterval != 0)
+    {
+      opHeartbeatGenTimer->force_cancel();
+    }
+
+  opT1InitTimer->force_cancel();
+  opT1CookieTimer->force_cancel();
+  iInitTryCount = 0;
+  uiNextTsn = 0;
+  usNextStreamId = 0;
+
+  /* if it's already allocated, let's delete and reallocate just in case user
+   * has changed TCL bindable variables
+   */
+  /* NE: 10/27/2008 Bug fix from Eduardo Ribeiro and Igor Gavriloff. */
+  if(spOutStreams != NULL)
+    delete[] spOutStreams;
+  spOutStreams = new SctpOutStream_S [uiNumOutStreams];
+  memset(spOutStreams, 0, (uiNumOutStreams * sizeof(SctpOutStream_S)) );
+
+  for(i = 0; i < (int) uiNumUnrelStreams; i++)
+    {
+      spOutStreams[i].eMode = SCTP_STREAM_UNRELIABLE;
+    }
+  for(; i < (int) uiNumOutStreams; i++)
+    {
+      spOutStreams[i].eMode = SCTP_STREAM_RELIABLE;
+    }
+
+  uiPeerRwnd = 0;
+  uiCumAckPoint = 0;
+  uiAdvancedPeerAckPoint = 0;
+  uiHighestTsnNewlyAcked = 0;
+  uiRecover = 0;
+  memset(&sAppLayerBuffer, 0, sizeof(List_S) );
+  memset(&sSendBuffer, 0, sizeof(List_S) );
+  memset(&pktQ_, 0, sizeof(List_S) );
+
+  /* NE: initialize the value for last TSN sent */
+  uiHighestTsnSent = 0;
+
+  for(spCurrNode = sDestList.spHead;
+      spCurrNode != NULL;
+      spCurrNode = spCurrNode->spNext)
+    {
+      spCurrDest = (SctpDest_S *) spCurrNode->vpData;
+      
+      /* Lukasz Budzisz : 03/09/2006
+	 Section 7.2.1 of RFC4960 */
+      spCurrDest->iCwnd = 
+	MIN(4 * (int) uiMaxDataSize, MAX(4380, 2 * (int) uiMaxDataSize));
+      spCurrDest->iSsthresh = iInitialSsthresh;
+      spCurrDest->eFirstRttMeasurement = TRUE;
+      spCurrDest->dRto = dInitialRto;
+
+      if(spCurrDest->opT3RtxTimer == NULL)
+	spCurrDest->opT3RtxTimer = new T3RtxTimer(this, spCurrDest);
+      else 
+	spCurrDest->opT3RtxTimer->force_cancel();
+
+      spCurrDest->iOutstandingBytes = 0;
+      spCurrDest->iPartialBytesAcked = 0;
+
+      spCurrDest->iErrorCount = 0;
+      spCurrDest->iTimeoutCount = 0;
+      spCurrDest->eStatus = SCTP_DEST_STATUS_ACTIVE;
+
+      if(spCurrDest->opCwndDegradeTimer == NULL)
+	{
+	  spCurrDest->opCwndDegradeTimer =
+	    new CwndDegradeTimer(this, spCurrDest);
+	}
+      else
+	{
+	  spCurrDest->opCwndDegradeTimer->force_cancel();
+	}
+      
+      spCurrDest->dIdleSince = 0;
+            
+      if(spCurrDest->opHeartbeatTimeoutTimer == NULL)
+	{
+	  spCurrDest->opHeartbeatTimeoutTimer =
+	    new HeartbeatTimeoutTimer(this, spCurrDest);
+	}
+      else
+	{
+	  spCurrDest->opHeartbeatTimeoutTimer->force_cancel();
+	}
+      
+      spCurrDest->eCcApplied = FALSE;
+      spCurrDest->spFirstOutstanding = NULL;
+      
+      /* per destination vars for CMT
+       */
+      spCurrDest->uiBurstLength = 0;
+      spCurrDest->eMarkedChunksPending = FALSE;
+      
+      spCurrDest->iRcdCount = 0;      
+      spCurrDest->eRouteCached = FALSE;
+      
+      if(spCurrDest->opRouteCacheFlushTimer == NULL)
+	{
+	  spCurrDest->opRouteCacheFlushTimer =
+	    new RouteCacheFlushTimer(this, spCurrDest);
+	}
+      else
+	{
+	  spCurrDest->opRouteCacheFlushTimer->force_cancel();
+	}
+
+      if(spCurrDest->opRouteCalcDelayTimer == NULL)
+	{
+	  spCurrDest->opRouteCalcDelayTimer =
+	    new RouteCalcDelayTimer(this, spCurrDest);
+	}
+      else
+	{
+	  spCurrDest->opRouteCalcDelayTimer->force_cancel();
+	}
+
+      memset(&spCurrDest->sBufferedPackets, 0, sizeof(List_S) );
+    }
+
+  eForwardTsnNeeded = FALSE;
+  eSendNewDataChunks = FALSE;
+  eMarkedChunksPending = FALSE;
+  eApplyMaxBurst = FALSE; // Why is MaxBurst init'd to FALSE?? (JRI)
+  eDataSource = DATA_SOURCE_APPLICATION;
+  uiBurstLength = 0;
+
+  uiMyRwnd = uiInitialRwnd;
+  uiCumAck = 0; 
+  uiHighestRecvTsn = 0;
+  memset(&sRecvTsnBlockList, 0, sizeof(List_S) );
+  memset(&sDupTsnList, 0, sizeof(List_S) );
+  eStartOfPacket = FALSE;
+  iDataPktCountSinceLastSack = 0;
+  eSackChunkNeeded = FALSE;
+
+  /* PN: 5/2007. NR-Sacks */
+  ClearList(&sNonRenegTsnBlockList);
+  ClearList(&sNonRenegTsnList);
+  memset(&sNonRenegTsnBlockList, 0, sizeof(List_S) );
+  memset(&sNonRenegTsnList, 0, sizeof(List_S) );
+
+  opSackGenTimer->force_cancel();
+
+  /* if it's already allocated, let's delete and reallocate just in case user
+   * has changed TCL bindable variables
+   */
+  /* NE: 10/27/2008 Bug fix from Eduardo Ribeiro and Igor Gavriloff.*/
+  if(spSctpTrace != NULL)
+    delete[] spSctpTrace;
+  
+  /* We don't know how many chunks will be in a packet, so we assume the 
+   * theoretical maximum... a packet full of only chunk headers.
+   */
+  spSctpTrace = new SctpTrace_S[uiMaxPayloadSize / sizeof(SctpChunkHdr_S)];
+
+  uiNumChunks = 0;
+
+  /* Trigger changes for trace to pick up (we want to know the initial values)
+   */
+  tiCwnd++;
+  tiRwnd++;
+  tdRto++;
+  tiErrorCount++;
+  tiFrCount = 0;
+  tiTimeoutCount++;
+  tiRcdCount++;
+
+  OptionReset();
+}
+

@@ -56,6 +56,7 @@ protected:
 	virtual void addToList(Packet *p);
 	virtual int BundleControlChunks(u_char *);
 	virtual void ProcessOptionChunk(u_char *);
+	virtual void Reset();
   // virtual void recv(Packet *pkt, Handler*);
 
 	/* variables for TFRC integration
