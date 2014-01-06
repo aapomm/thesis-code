@@ -700,6 +700,8 @@ void SctpRateHybrid::nextpkt(){
   node->vpData = NULL;
   delete node;
 
+  pktQ_.uiLength--;
+
   //DeleteNode(&pktQ_, node);
 
 	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
