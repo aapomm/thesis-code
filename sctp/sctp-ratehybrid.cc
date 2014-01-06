@@ -282,7 +282,7 @@ void SctpRateHybrid::addToList(Packet *p){
 	Node_S *spNewNode= new Node_S;
 	spNewNode->vpData = p;
 
-  /*if(pktQ_.spTail == NULL)
+  if(pktQ_.spTail == NULL)
 		pktQ_.spHead = spNewNode;
 	else
 		pktQ_.spTail->spNext = spNewNode;
@@ -292,9 +292,9 @@ void SctpRateHybrid::addToList(Packet *p){
 
 	pktQ_.spTail = spNewNode;
 
-	pktQ_.uiLength++;*/
+	pktQ_.uiLength++;
 
-  InsertNode(&pktQ_, pktQ_.spTail, spNewNode, NULL);
+  //InsertNode(&pktQ_, pktQ_.spTail, spNewNode, NULL);
 
   printf("length: %d\n", pktQ_.uiLength);
 
@@ -696,8 +696,11 @@ void SctpRateHybrid::nextpkt(){
 	else{
 		timer_send->resched(uiMaxPayloadSize/rate_);
 	}
+  // delete (Packet *) node->vpData;
+  node->vpData = NULL;
+  delete node;
 
-  DeleteNode(&pktQ_, node);
+  //DeleteNode(&pktQ_, node);
 
 	// printf("length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
