@@ -44,6 +44,7 @@ for {set i 0} {$i < 2} {incr i} {
 	# source
 	set sctp_src_n($i) [$ns node]
 	set sctp_src($i) [new Agent/SCTP/Ratehybrid]
+	$sctp_src($i) set mtu_ 1600
 	set sctp_traf($i) [new Application/FTP]
 	$ns duplex-link $sctp_src_n($i) $bottleneck1 50Mb 2ms DropTail
 	$ns attach-agent $sctp_src_n($i) $sctp_src($i)
