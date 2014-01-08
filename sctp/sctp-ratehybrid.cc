@@ -296,7 +296,6 @@ void SctpRateHybrid::addToList(Packet *p){
 
   //InsertNode(&pktQ_, pktQ_.spTail, spNewNode, NULL);
 
-  printf("length: %d\n", pktQ_.uiLength);
 
   // printf("add! length: %d time: %lf\n", pktQ_.uiLength, Scheduler::instance().clock());
 }
@@ -644,8 +643,12 @@ void SctpRateHybrid::nextpkt(){
 		Packet *pktToSend = (Packet *) node->vpData;
 		PacketData *pktToSendData = (PacketData*) pktToSend->userdata(); 
 		SctpTfrcChunk_S *firstChunk = (SctpTfrcChunk_S *) pktToSendData->data(); // TFRC chunk is always the 1st chunk
+		SctpHeartbeatAckChunk_S *test = (SctpHeartbeatAckChunk_S *) pktToSendData->data();
+		int type = ((SctpChunkHdr_S *)pktToSendData->data())->ucType;
 
 		/* Add TFRC details */	
+		if(type == 18)
+		{
 		firstChunk->timestamp = Scheduler::instance().clock();
 		firstChunk->rtt = rtt_;
 		firstChunk->seqno = ++seqno_;
@@ -655,6 +658,8 @@ void SctpRateHybrid::nextpkt(){
 		firstChunk->fsize=fsize_;
 		firstChunk->UrgentFlag=UrgentFlag;
 		firstChunk->round_id=round_id;
+		}
+
 	}
 
 	send((Packet *)(node->vpData),0);
