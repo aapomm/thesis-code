@@ -63,10 +63,18 @@ BEGIN {
 }
 END {
     for (i = 2; i < (number_of_nodes * 2) + 2; i++) {
-      if (i % 2 == 1) tcp_bytes += total_size[i];
+      if (i % 2 == 1) {
+        printf "TCP: %d\n", total_size[i];
+        tcp_bytes += total_size[i];
+      }
     }
     for(i = (number_of_nodes * 2) + 2; i < (number_of_nodes * 4) + 2; i++) {
-      if (i % 2 == 1)  hybrid_bytes += total_size[i];
+      if (i % 2 == 1) {
+        printf "SCTP: %d\n", total_size[i];
+        hybrid_bytes += total_size[i];
+      }
     }
+  printf "Total for TCP: %d\n", tcp_bytes;
+  printf "Total for SCTP: %d\n", hybrid_bytes;
   printf("Fairness: %lf\n", hybrid_bytes / (tcp_bytes + hybrid_bytes));
 }
