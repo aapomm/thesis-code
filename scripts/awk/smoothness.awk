@@ -1,7 +1,7 @@
 BEGIN {
   bytes_recvd[16];
   total_size[16];
-  number_of_nodes = 2;
+  number_of_nodes = 8;
   tcp_bytes = 0;
   hybrid_bytes = 0;
   interval = 1;
