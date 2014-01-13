@@ -25,6 +25,7 @@ for {set i 0} {$i < 8} {incr i} {
 	set tcp_src_n($i) [$ns node]	
 	set tcp_src($i) [new Agent/TCP/Sack1]
 	set tcp_traf($i) [new Application/FTP]
+	$tcp_src($i) set packetSize_ 1600
 	$ns duplex-link $tcp_src_n($i) $bottleneck1 50Mb 2ms DropTail
 	$ns attach-agent $tcp_src_n($i) $tcp_src($i)
 	$tcp_traf($i) attach-agent $tcp_src($i) 
